@@ -29,12 +29,18 @@ from reportlab.pdfgen import canvas
 from google import genai
 from google.genai import types
 
-# Background removal (rembg / U2Net — open-source, runs server-side)
-try:
-    from rembg import remove as rembg_remove
-    REMBG_AVAILABLE = True
-except ImportError:
-    REMBG_AVAILABLE = False
+# Load background removal only when an upload needs it. Importing its ONNX /
+# numba stack during startup can keep a small instance from opening its port.
+from importlib.util import find_spec
+REMBG_AVAILABLE = find_spec('rembg') is not None
+
+
+def rembg_remove(image_bytes):
+    from rembg import remove
+    return remove(image_bytes)
+
+
+if not REMBG_AVAILABLE:
     print('[rembg] Not installed — background removal disabled')
 
 # Demo lead-gated module
