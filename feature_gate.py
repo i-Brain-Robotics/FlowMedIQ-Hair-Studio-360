@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 # ─── Configuration ──────────────────────────────────────────────────────────
 ADMIN_URL = os.environ.get("ADMIN_URL", "https://admin.flowgeniq.io").rstrip("/")
-APP_SLUG = os.environ.get("APP_SLUG", "hair-studio-360")
+APP_SLUG = os.environ.get("APP_SLUG", "flowmediq-hair-studio-360")
 CACHE_TTL = 5 * 60  # 5 minutes
 
 # ─── Feature Map Cache ──────────────────────────────────────────────────────

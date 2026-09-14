@@ -102,7 +102,7 @@ def extract_generated_image(parts):
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY') or os.urandom(32)
-app.config['SESSION_COOKIE_NAME'] = 'hair_studio_360_session'
+app.config['SESSION_COOKIE_NAME'] = 'flowmediq_hair_studio_360_session'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE'] = bool(os.environ.get('RENDER'))
@@ -156,7 +156,7 @@ def build_public_share_url(share_id):
 # ============================================
 ADMIN_URL = os.environ.get('ADMIN_URL', 'https://admin.flowgeniq.io').rstrip('/')
 APP_KEY = os.environ.get('APP_KEY', '')
-APP_SLUG = os.environ.get('APP_SLUG', 'hair-studio-360')
+APP_SLUG = os.environ.get('APP_SLUG', 'flowmediq-hair-studio-360')
 SUITE_URL = os.environ.get('SUITE_URL', 'https://suite.flowmediq.io').rstrip('/')
 
 # ============================================

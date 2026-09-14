@@ -2,7 +2,7 @@
 # This Blueprint intentionally contains no envVars or environment groups.
 services:
   - type: web
-    name: Hair Studio 360
+    name: FlowMedIQ Hair Studio 360
     runtime: python
     plan: free
     branch: main

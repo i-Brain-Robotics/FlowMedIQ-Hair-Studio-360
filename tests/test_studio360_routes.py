@@ -107,6 +107,8 @@ class RoutesTests(unittest.TestCase):
         response=self.client.post('/api/360/generate',json={'image_id':data['imageId'],'view':'nonsurgical','scenario':body()})
         self.assertEqual(response.status_code,400)
         with self.client.session_transaction() as s:s.clear()
-        self.assertIn(self.client.post('/api/360/model',json=body()).status_code,(302,401))
+        response=self.client.post('/api/360/model',json=body())
+        self.assertEqual(response.status_code,302)
+        self.assertEqual(response.headers['Location'],application.SUITE_URL+'/launch/flowmediq-hair-studio-360')
 
 if __name__=='__main__':unittest.main()

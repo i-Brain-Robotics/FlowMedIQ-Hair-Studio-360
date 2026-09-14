@@ -6,9 +6,11 @@ Deploy only from `i-Brain-Robotics/FlowMedIQ-Hair-Studio-360`. The similarly nam
 
 ## Render configuration
 
+The workspace already has a different Hair Studio 360 app. This deployment uses the distinct service name FlowMedIQ Hair Studio 360 and Suite identifier `flowmediq-hair-studio-360`.
+
 Use the user's confirmed Render workspace and first check whether a Hair Studio 360 service already exists to avoid duplicates. The prepared Blueprint describes:
 
-- Name: Hair Studio 360
+- Name: FlowMedIQ Hair Studio 360
 - Python runtime, free review instance, one gevent worker
 - Repository: i-Brain-Robotics/FlowMedIQ-Hair-Studio-360
 - Branch: main
@@ -23,14 +25,14 @@ Use the user's confirmed Render workspace and first check whether a Hair Studio 
 |---|---|
 | SECRET_KEY | Set a new strong session secret before public deployment. |
 | APP_KEY | Register this new child app and enter its distinct Suite credential. |
-| APP_SLUG | Set to the registered identifier, planned as `hair-studio-360`. |
+| APP_SLUG | Set to the registered identifier, planned as `flowmediq-hair-studio-360`. |
 | ADMIN_URL | Confirm `https://admin.flowgeniq.io`. |
 | SUITE_URL | Confirm `https://suite.flowmediq.io`. |
 | GEMINI_API_KEY | Set the authorized image-provider credential. |
 | OPENAI_API_KEY | Optional; required for inherited voice output features. |
 | PUBLIC_BASE_URL | Optional; set to the new confirmed URL for branded sharing. |
 
-Register the new child app and callback in Suite Admin and the launcher through authorized configuration. Do not modify their source code. The inherited demo workflow uses the distinct app type `hair_studio_360`; demo integration requires matching support/configuration before use.
+Register the new child app and callback in Suite Admin and the launcher through authorized configuration. Do not modify their source code. The inherited demo workflow uses the distinct app type `flowmediq_hair_studio_360`; demo integration requires matching support/configuration before use.
 
 The free review instance has temporary local storage. Comparison images and the SQLite cache under `instance/studio360` disappear on redeploy; original uploads/results are also temporary. This is suitable for review, not durable patient storage. Durable storage and appropriate access controls need a separately reviewed production configuration. One worker avoids session-key drift if an administrator has not yet set SECRET_KEY; production still requires a stable configured secret.
 

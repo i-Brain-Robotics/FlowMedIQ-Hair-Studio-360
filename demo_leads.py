@@ -69,7 +69,7 @@ def normalize_phone(phone: str) -> str:
 
 # Keep module-level aliases for SUITE_API_URL and APP_TYPE (non-sensitive, stable)
 SUITE_API_URL = os.environ.get('SUITE_API_URL', 'https://suite.flowmediq.io')
-APP_TYPE = 'hair_studio_360'
+APP_TYPE = 'flowmediq_hair_studio_360'
 
 
 # ============================================
