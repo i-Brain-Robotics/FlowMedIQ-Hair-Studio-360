@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowMediQ AI Hair Studio - Shared Results</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/favicon.png') }}">
+    
+    <!-- Open Graph / Social Sharing Meta -->
+    {% if share_type == 'full_360' %}
+    <meta property="og:title" content="FlowMediQ AI Hair Studio - 360° Hair Restoration Preview">
+    <meta property="og:description" content="Interactive 360° turntable view and before/after comparison of AI-generated hair restoration simulation.">
+    {% else %}
+    <meta property="og:title" content="FlowMediQ AI Hair Studio - Before & After Results">
+    <meta property="og:description" content="Before and after comparison of AI-generated hair restoration simulation.">
+    {% endif %}
+    <meta property="og:type" content="website">
+    {% if after_image %}
+    <meta property="og:image" content="{{ after_image }}">
+    {% endif %}
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ============================================
+           Shared Results Page - Self-contained Styles
+           ============================================ */
+        :root {
+            --primary-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            --accent-gradient: linear-gradient(135deg, #e94560 0%, #ff6b6b 100%);
+            --gold-gradient: linear-gradient(135deg, #d4af37 0%, #f4e4ba 50%, #d4af37 100%);
+            --text-primary: #1a1a2e;
+            --text-secondary: #4a5568;
+            --text-muted: #718096;
+            --accent-color: #e94560;
+            --success-color: #10b981;
+            --border-radius-sm: 8px;
+            --border-radius-md: 12px;
+            --border-radius-lg: 20px;
+            --border-radius-xl: 28px;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.12);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            padding: 24px;
+            line-height: 1.6;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(233, 69, 96, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(212, 175, 55, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: var(--border-radius-xl);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Header */
+        header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(233, 69, 96, 0.15) 0%, transparent 60%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        header h1 {
+            font-size: 2.4em;
+            font-weight: 800;
+            margin-bottom: 8px;
+            position: relative;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 50%, #d4af37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        header p {
+            font-size: 1.05em;
+            opacity: 0.9;
+            position: relative;
+            font-weight: 400;
+        }
+
+        .shared-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-top: 12px;
+            position: relative;
+        }
+
+        .share-type-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-top: 8px;
+            position: relative;
+        }
+
+        .share-type-indicator.type-360 {
+            background: rgba(99, 102, 241, 0.2);
+            color: #c7d2fe;
+        }
+
+        .share-type-indicator.type-ba {
+            background: rgba(16, 185, 129, 0.2);
+            color: #a7f3d0;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 40px;
+        }
+
+        /* Error State */
+        .error-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .error-state h2 {
+            color: var(--accent-color);
+            margin-bottom: 12px;
+            font-size: 1.5em;
+        }
+
+        .error-state p {
+            color: var(--text-secondary);
+            font-size: 1.05em;
+        }
+
+        .error-state .error-icon {
+            font-size: 3em;
+            margin-bottom: 16px;
+        }
+
+        /* Section Titles */
+        .section-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--accent-gradient);
+            border-radius: 2px;
+        }
+
+        /* Before/After Section */
+        .before-after-section {
+            margin-bottom: 40px;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            margin-bottom: 24px;
+        }
+
+        .result-item {
+            text-align: center;
+            background: white;
+            border-radius: var(--border-radius-md);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid #e8e8e8;
+            transition: all 0.3s ease;
+        }
+
+        .result-item:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-4px);
+        }
+
+        .result-item h3 {
+            color: var(--text-primary);
+            margin-bottom: 14px;
+            font-size: 1.15em;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .result-item h3.before-title::before {
+            content: '';
+            width: 12px; height: 12px;
+            background: #94a3b8;
+            border-radius: 50%;
+        }
+
+        .result-item h3.after-title::before {
+            content: '';
+            width: 12px; height: 12px;
+            background: var(--success-color);
+            border-radius: 50%;
+        }
+
+        .result-item img {
+            width: 100%;
+            border-radius: var(--border-radius-sm);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Graft Summary */
+        .graft-summary-section {
+            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+            border: 2px solid #e8e8e8;
+            border-radius: var(--border-radius-md);
+            padding: 24px;
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .graft-summary-section::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 3px;
+            background: var(--gold-gradient);
+        }
+
+        .graft-summary-section h3 {
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            font-size: 1.15em;
+            font-weight: 700;
+        }
+
+        .graft-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .graft-table th {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 10px 16px;
+            text-align: left;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .graft-table th:first-child { border-radius: 8px 0 0 0; }
+        .graft-table th:last-child { border-radius: 0 8px 0 0; }
+
+        .graft-table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid #e8e8e8;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        .graft-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .graft-table .total-row td {
+            font-weight: 700;
+            color: var(--text-primary);
+            border-top: 2px solid #e0e0e0;
+            padding-top: 14px;
+        }
+
+        .graft-table .total-row .graft-count {
+            color: var(--accent-color);
+            font-size: 1.05em;
+        }
+
+        .graft-count {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        /* Turntable Section */
+        .turntable-section {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%);
+            border: 2px solid #c7d2fe;
+            border-radius: var(--border-radius-md);
+            padding: 28px;
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .turntable-section::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 3px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+        }
+
+        .turntable-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .turntable-header h3 {
+            color: var(--text-primary);
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .turntable-description {
+            color: var(--text-secondary);
+            font-size: 0.95em;
+        }
+
+        /* Viewer Layout */
+        .viewer-main {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .nav-btn {
+            flex-shrink: 0;
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            border: 2px solid #6366f1;
+            background: white;
+            color: #6366f1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
+        }
+
+        .nav-btn:hover {
+            background: #6366f1;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+        }
+
+        .nav-btn svg { stroke: currentColor; }
+
+        .viewer-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            aspect-ratio: 1;
+            background: #f8f9fa;
+            border-radius: var(--border-radius-md);
+            overflow: hidden;
+            cursor: grab;
+            box-shadow: var(--shadow-md);
+            border: 2px solid #e2e8f0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .turntable-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .viewer-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            font-size: 1.1em;
+            font-weight: 500;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        /* Viewer Controls */
+        .viewer-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+            margin-top: 12px;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .angle-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 8px 16px;
+            border-radius: var(--border-radius-sm);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid #e2e8f0;
+        }
+
+        .angle-label {
+            color: var(--text-muted);
+            font-size: 0.9em;
+        }
+
+        .angle-value {
+            color: #6366f1;
+            font-weight: 700;
+            font-size: 1.1em;
+            min-width: 45px;
+        }
+
+        .angle-view-name {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.95em;
+            padding: 2px 10px;
+            background: #eef2ff;
+            border-radius: 4px;
+        }
+
+        .angle-step {
+            color: var(--text-muted);
+            font-size: 0.85em;
+        }
+
+        .viewer-hint {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+            font-size: 0.85em;
+        }
+
+        .auto-rotate-toggle .btn {
+            padding: 8px 16px;
+            font-size: 0.85em;
+        }
+
+        /* Thumbnail Strip */
+        .turntable-thumbnails {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 16px 0;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .turntable-thumbnails::-webkit-scrollbar { height: 6px; }
+        .turntable-thumbnails::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
+        .turntable-thumbnails::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 3px; }
+
+        .turntable-thumb {
+            flex-shrink: 0;
+            width: 90px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: var(--border-radius-sm);
+            padding: 6px;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .turntable-thumb:hover {
+            border-color: #a5b4fc;
+            transform: translateY(-2px);
+        }
+
+        .turntable-thumb.active {
+            border-color: #6366f1;
+            background: #eef2ff;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+        }
+
+        .turntable-thumb img {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 4px;
+        }
+
+        .thumb-angle {
+            font-size: 0.7em;
+            color: var(--text-muted);
+            font-weight: 600;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .turntable-thumb.active .thumb-angle {
+            color: #6366f1;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: var(--border-radius-md);
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.85em;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #6366f1;
+            border: 2px solid #6366f1;
+        }
+
+        .btn-outline:hover {
+            background: #6366f1;
+            color: white;
+        }
+
+        .btn-primary {
+            background: var(--accent-gradient);
+            color: white;
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(233, 69, 96, 0.4);
+        }
+
+        /* Disclaimer */
+        .disclaimer {
+            background: linear-gradient(135deg, #fff9e6 0%, #fff5d6 100%);
+            border: 1px solid #f0d78c;
+            border-left: 4px solid #d4af37;
+            border-radius: var(--border-radius-sm);
+            padding: 16px 20px;
+            margin-top: 24px;
+            font-size: 0.88em;
+            color: #8b7355;
+        }
+
+        .disclaimer strong {
+            color: #6b5a3e;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        /* Footer */
+        footer {
+            background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);
+            padding: 20px;
+            text-align: center;
+            color: var(--text-muted);
+            border-top: 1px solid #e8e8e8;
+            font-size: 0.9em;
+        }
+
+        footer a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* CTA Banner */
+        .cta-banner {
+            background: var(--primary-gradient);
+            border-radius: var(--border-radius-md);
+            padding: 28px;
+            text-align: center;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(233, 69, 96, 0.1) 0%, transparent 60%);
+        }
+
+        .cta-banner p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1em;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .cta-banner .btn {
+            position: relative;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .main-content { padding: 24px; }
+            header { padding: 28px 20px; }
+            header h1 { font-size: 1.8em; }
+            .results-grid { grid-template-columns: 1fr; }
+            .viewer-container { max-width: 100%; }
+            .viewer-controls { flex-direction: column; align-items: center; }
+            .turntable-thumb { width: 72px; }
+            .nav-btn { width: 40px; height: 40px; }
+            .nav-btn svg { width: 20px; height: 20px; }
+            .viewer-main { gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div style="display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;"><img src="{{ url_for('static', filename='images/flowmediq-logo.png') }}" alt="FlowMediQ AI Hair Studio" style="width:48px;height:48px;border-radius:10px;object-fit:contain;display:block;"><h1 style="margin:0;">FlowMediQ AI Hair Studio</h1></div>
+            <p>AI Hair Restoration Simulation</p>
+            <div class="shared-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="18" cy="5" r="3"/>
+                    <circle cx="6" cy="12" r="3"/>
+                    <circle cx="18" cy="19" r="3"/>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                </svg>
+                Shared Result
+            </div>
+            {% if share_type == 'full_360' %}
+            <div class="share-type-indicator type-360">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                </svg>
+                Before/After + 360&deg; Turntable
+            </div>
+            {% else %}
+            <div class="share-type-indicator type-ba">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="12" y1="3" x2="12" y2="21"/>
+                </svg>
+                Before &amp; After Comparison
+            </div>
+            {% endif %}
+        </header>
+
+        <div class="main-content">
+            {% if error %}
+            <!-- Error State -->
+            <div class="error-state">
+                <div class="error-icon">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#e94560" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                </div>
+                <h2>Result Not Found</h2>
+                <p>This shared result may have expired or the link may be incorrect.</p>
+            </div>
+            {% else %}
+            
+            <!-- Before & After Section -->
+            {% if before_image and after_image %}
+            <div class="before-after-section">
+                <h2 class="section-title">Before &amp; After Comparison</h2>
+                <div class="results-grid">
+                    <div class="result-item">
+                        <h3 class="before-title">Before</h3>
+                        <img src="{{ before_image }}" alt="Before" loading="lazy">
+                    </div>
+                    <div class="result-item">
+                        <h3 class="after-title">After</h3>
+                        <img src="{{ after_image }}" alt="After" loading="lazy">
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Graft Summary Section -->
+            {% if graft_summary and graft_summary.areas %}
+            <div class="graft-summary-section">
+                <h3>Treatment Summary</h3>
+                <table class="graft-table">
+                    <thead>
+                        <tr>
+                            <th>Treatment Area</th>
+                            <th>Density</th>
+                            <th>FU/cm&sup2;</th>
+                            <th>Est. Grafts</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for area in graft_summary.areas %}
+                        <tr>
+                            <td>{{ area.area }}</td>
+                            <td>{{ area.density }}</td>
+                            <td>{{ area.fuPerCm2 }}</td>
+                            <td class="graft-count">{{ area.grafts }}</td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="total-row">
+                            <td colspan="3"><strong>Total Estimated Grafts</strong></td>
+                            <td class="graft-count">{{ graft_summary.total }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <!-- 360° Turntable Section (only shown for full_360 shares) -->
+            {% if share_type == 'full_360' and turntable_images and turntable_images|length > 0 %}
+            <div class="turntable-section">
+                <div class="turntable-header">
+                    <h3>360&deg; Turntable View</h3>
+                    <p class="turntable-description">Interactive 360&deg; view of the AI-generated hair restoration result. Drag, use arrows, or click thumbnails to rotate.</p>
+                </div>
+
+                <div class="viewer-main">
+                    <button class="nav-btn" onclick="navigateShared(-1)" title="Previous angle">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="15 18 9 12 15 6"/>
+                        </svg>
+                    </button>
+
+                    <div class="viewer-container" id="viewer-container">
+                        <img id="turntable-image" class="turntable-image" alt="360° View" draggable="false">
+                        <div class="viewer-overlay" id="viewer-overlay">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <polyline points="15 18 9 12 15 6"/>
+                            </svg>
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                            <span>Drag or use arrows to rotate</span>
+                        </div>
+                    </div>
+
+                    <button class="nav-btn" onclick="navigateShared(1)" title="Next angle">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="viewer-controls">
+                    <div class="angle-indicator">
+                        <span class="angle-label">Angle:</span>
+                        <span class="angle-value" id="viewer-angle">0&deg;</span>
+                        <span class="angle-view-name" id="viewer-view-name">Front View</span>
+                        <span class="angle-step" id="viewer-step">(1 / 8)</span>
+                    </div>
+                    <div class="viewer-hint">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"/>
+                        </svg>
+                        Arrows, drag, or scroll to rotate
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                    </div>
+                    <div class="auto-rotate-toggle">
+                        <button onclick="toggleSharedAutoRotate()" class="btn btn-small btn-outline" id="auto-rotate-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="5 3 19 12 5 21 5 3"/>
+                            </svg>
+                            Auto Rotate
+                        </button>
+                    </div>
+                </div>
+
+                <div class="turntable-thumbnails" id="turntable-thumbnails"></div>
+            </div>
+            {% endif %}
+
+            <!-- Disclaimer -->
+            <div class="disclaimer">
+                <strong>Important Disclaimer</strong>
+                This visualization is a rough estimate generated by AI for illustrative purposes only. 
+                It does not guarantee actual surgical results. Individual outcomes vary based on factors 
+                including hair characteristics, donor area quality, and surgical technique. 
+                Please consult with a qualified hair restoration specialist for accurate assessment.
+            </div>
+
+            {% endif %}
+        </div>
+
+        <footer>
+            <p>Powered by <strong>FlowMediQ AI Hair Studio</strong></p>
+        </footer>
+    </div>
+
+    {% if not error and share_type == 'full_360' and turntable_images and turntable_images|length > 0 %}
+    <script>
+        // ============================================
+        // Shared Turntable Viewer - Self-contained JS
+        // ============================================
+
+        const sharedImages = {{ turntable_images | tojson }};
+        let currentIndex = 0;
+        let autoRotateInterval = null;
+        let isAutoRotating = false;
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartIndex = 0;
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (sharedImages.length > 0) {
+                // Preload images
+                sharedImages.forEach(img => {
+                    const preload = new Image();
+                    preload.src = img.url;
+                });
+
+                updateImage();
+                buildThumbnails();
+                setupInteraction();
+                setupKeyboard();
+            }
+        });
+
+        function navigateShared(direction) {
+            if (sharedImages.length === 0) return;
+            currentIndex = (currentIndex + direction + sharedImages.length) % sharedImages.length;
+            updateImage();
+        }
+
+        function updateImage() {
+            if (sharedImages.length === 0) return;
+
+            const img = document.getElementById('turntable-image');
+            const angleDisplay = document.getElementById('viewer-angle');
+            const viewNameDisplay = document.getElementById('viewer-view-name');
+            const stepDisplay = document.getElementById('viewer-step');
+
+            const current = sharedImages[currentIndex];
+            img.src = current.url;
+            angleDisplay.textContent = current.angle + '\u00b0';
+            if (viewNameDisplay) viewNameDisplay.textContent = current.name || current.short || '';
+            if (stepDisplay) stepDisplay.textContent = `(${currentIndex + 1} / ${sharedImages.length})`;
+
+            document.querySelectorAll('.turntable-thumb').forEach((thumb, i) => {
+                thumb.classList.toggle('active', i === currentIndex);
+            });
+
+            const activeThumb = document.querySelector('.turntable-thumb.active');
+            if (activeThumb) {
+                activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+        }
+
+        function buildThumbnails() {
+            const container = document.getElementById('turntable-thumbnails');
+            container.innerHTML = '';
+
+            sharedImages.forEach((img, index) => {
+                const thumb = document.createElement('div');
+                thumb.className = 'turntable-thumb' + (index === 0 ? ' active' : '');
+                const label = img.short || img.name || (img.angle + '\u00b0');
+                thumb.innerHTML = `
+                    <img src="${img.url}" alt="${label}" draggable="false">
+                    <span class="thumb-angle">${label}</span>
+                `;
+                thumb.onclick = () => {
+                    currentIndex = index;
+                    updateImage();
+                };
+                container.appendChild(thumb);
+            });
+        }
+
+        function setupInteraction() {
+            const container = document.getElementById('viewer-container');
+            const overlay = document.getElementById('viewer-overlay');
+
+            container.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                dragStartX = e.clientX;
+                dragStartIndex = currentIndex;
+                overlay.style.opacity = '0';
+                container.style.cursor = 'grabbing';
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const deltaX = e.clientX - dragStartX;
+                const sensitivity = 40;
+                const indexDelta = Math.round(deltaX / sensitivity);
+                let newIndex = (dragStartIndex + indexDelta) % sharedImages.length;
+                if (newIndex < 0) newIndex += sharedImages.length;
+                if (newIndex !== currentIndex) {
+                    currentIndex = newIndex;
+                    updateImage();
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    container.style.cursor = 'grab';
+                }
+            });
+
+            container.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                dragStartX = e.touches[0].clientX;
+                dragStartIndex = currentIndex;
+                overlay.style.opacity = '0';
+                e.preventDefault();
+            }, { passive: false });
+
+            container.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                const deltaX = e.touches[0].clientX - dragStartX;
+                const sensitivity = 40;
+                const indexDelta = Math.round(deltaX / sensitivity);
+                let newIndex = (dragStartIndex + indexDelta) % sharedImages.length;
+                if (newIndex < 0) newIndex += sharedImages.length;
+                if (newIndex !== currentIndex) {
+                    currentIndex = newIndex;
+                    updateImage();
+                }
+                e.preventDefault();
+            }, { passive: false });
+
+            container.addEventListener('touchend', () => { isDragging = false; });
+
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const direction = e.deltaY > 0 ? 1 : -1;
+                currentIndex = (currentIndex + direction + sharedImages.length) % sharedImages.length;
+                updateImage();
+            }, { passive: false });
+        }
+
+        function setupKeyboard() {
+            document.addEventListener('keydown', (e) => {
+                if (sharedImages.length === 0) return;
+                if (e.key === 'ArrowLeft') {
+                    currentIndex = (currentIndex - 1 + sharedImages.length) % sharedImages.length;
+                    updateImage();
+                    e.preventDefault();
+                } else if (e.key === 'ArrowRight') {
+                    currentIndex = (currentIndex + 1) % sharedImages.length;
+                    updateImage();
+                    e.preventDefault();
+                }
+            });
+        }
+
+        function toggleSharedAutoRotate() {
+            const btn = document.getElementById('auto-rotate-btn');
+
+            if (isAutoRotating) {
+                clearInterval(autoRotateInterval);
+                autoRotateInterval = null;
+                isAutoRotating = false;
+                btn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                    Auto Rotate
+                `;
+            } else {
+                isAutoRotating = true;
+                autoRotateInterval = setInterval(() => {
+                    currentIndex = (currentIndex + 1) % sharedImages.length;
+                    updateImage();
+                }, 800);
+                btn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="6" y="4" width="4" height="16"/>
+                        <rect x="14" y="4" width="4" height="16"/>
+                    </svg>
+                    Stop Rotation
+                `;
+            }
+        }
+    </script>
+    {% endif %}
+</body>
+</html>

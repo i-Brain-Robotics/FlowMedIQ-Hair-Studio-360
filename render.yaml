@@ -1,0 +1,12 @@
+# Environment values are configured manually by the administrator.
+# This Blueprint intentionally contains no envVars or environment groups.
+services:
+  - type: web
+    name: Hair Studio 360
+    runtime: python
+    plan: free
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --worker-class gevent --workers 1 --worker-connections 100 --timeout 300 --bind 0.0.0.0:$PORT
+    healthCheckPath: /healthz
+    autoDeployTrigger: "off"

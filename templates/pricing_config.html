@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing Configuration — FlowMediQ AI Hair Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            --gold: #d4af37;
+            --gold-light: #f4e4ba;
+            --gold-gradient: linear-gradient(135deg, #d4af37 0%, #f4e4ba 50%, #d4af37 100%);
+            --accent: #e94560;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-primary: #e8eaf6;
+            --text-secondary: #a0aec0;
+            --text-muted: #718096;
+            --card-bg: rgba(22, 33, 62, 0.92);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --input-bg: rgba(10, 15, 35, 0.7);
+            --input-border: rgba(255, 255, 255, 0.12);
+        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px 60px;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(212,175,55,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(212,175,55,0.04) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Page header ── */
+        .page-header {
+            text-align: center;
+            margin-bottom: 36px;
+            position: relative;
+            z-index: 1;
+        }
+        .page-header .brand-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            margin-bottom: 8px;
+        }
+        .page-header img {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            object-fit: contain;
+        }
+        .page-header h1 {
+            font-size: 26px;
+            font-weight: 800;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .page-header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        .user-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(212,175,55,0.1);
+            border: 1px solid rgba(212,175,55,0.25);
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 13px;
+            color: var(--gold-light);
+            margin-top: 12px;
+        }
+        .user-chip svg { flex-shrink: 0; }
+
+        /* ── Card ── */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 36px;
+            width: 100%;
+            max-width: 620px;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-title svg { color: var(--gold); }
+        .card-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+            line-height: 1.6;
+        }
+
+        /* ── PIN pad ── */
+        .pin-dots {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+        .pin-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid rgba(212,175,55,0.4);
+            background: transparent;
+            transition: all 0.2s;
+        }
+        .pin-dot.filled {
+            background: var(--gold-gradient);
+            border-color: var(--gold);
+            box-shadow: 0 0 10px rgba(212,175,55,0.4);
+        }
+        .pin-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            max-width: 280px;
+            margin: 0 auto 20px;
+        }
+        .pin-key {
+            aspect-ratio: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            color: var(--text-primary);
+            font-size: 20px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pin-key:hover {
+            background: rgba(212,175,55,0.12);
+            border-color: rgba(212,175,55,0.35);
+            transform: scale(1.04);
+        }
+        .pin-key:active { transform: scale(0.96); }
+        .pin-key.pin-clear {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+        .pin-key.pin-submit {
+            background: linear-gradient(135deg, rgba(212,175,55,0.2), rgba(244,228,186,0.1));
+            border-color: rgba(212,175,55,0.4);
+            color: var(--gold-light);
+        }
+        .pin-key.pin-submit:hover {
+            background: linear-gradient(135deg, rgba(212,175,55,0.35), rgba(244,228,186,0.2));
+        }
+        .pin-error {
+            text-align: center;
+            color: #fca5a5;
+            font-size: 13px;
+            min-height: 20px;
+            margin-bottom: 8px;
+        }
+        .pin-hint {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 12px;
+            margin-top: 16px;
+        }
+
+        /* ── Set-PIN form ── */
+        .set-pin-form { max-width: 320px; margin: 0 auto; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .form-group input[type="password"],
+        .form-group input[type="number"] {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 20px;
+            font-family: inherit;
+            letter-spacing: 6px;
+            text-align: center;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .form-group input:focus {
+            border-color: rgba(212,175,55,0.5);
+            box-shadow: 0 0 0 3px rgba(212,175,55,0.12);
+        }
+
+        /* ── Buttons ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-gold {
+            background: linear-gradient(135deg, rgba(212,175,55,0.25), rgba(244,228,186,0.12));
+            border: 1px solid rgba(212,175,55,0.4);
+            color: var(--gold-light);
+        }
+        .btn-gold:hover {
+            background: linear-gradient(135deg, rgba(212,175,55,0.4), rgba(244,228,186,0.2));
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(212,175,55,0.2);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #6c5ce7, #a855f7);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5b4bd5, #9333ea);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(108,92,231,0.35);
+        }
+        .btn-danger {
+            background: rgba(239,68,68,0.12);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: #fca5a5;
+        }
+        .btn-danger:hover {
+            background: rgba(239,68,68,0.2);
+        }
+        .btn-full { width: 100%; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+        /* ── Tier cards ── */
+        .tiers-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+        .tier-card {
+            background: rgba(10,15,35,0.5);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            padding: 16px 18px;
+            transition: border-color 0.2s;
+        }
+        .tier-card:hover { border-color: rgba(212,175,55,0.25); }
+        .tier-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+        .tier-type-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .toggle-btn {
+            flex: 1;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: transparent;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+        .toggle-btn.active {
+            background: rgba(212,175,55,0.15);
+            border-color: rgba(212,175,55,0.4);
+            color: var(--gold-light);
+        }
+        .tier-inputs { display: flex; gap: 10px; align-items: center; }
+        .tier-field { flex: 1; }
+        .tier-field label {
+            display: block;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+        .tier-field input {
+            width: 100%;
+            padding: 9px 12px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .tier-field input:focus {
+            border-color: rgba(212,175,55,0.4);
+            box-shadow: 0 0 0 2px rgba(212,175,55,0.1);
+        }
+        .tier-dash { color: var(--text-muted); font-size: 18px; padding-top: 20px; }
+
+        /* ── Status / alerts ── */
+        .status-msg {
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            margin-top: 16px;
+            display: none;
+        }
+        .status-msg.success {
+            background: rgba(16,185,129,0.12);
+            border: 1px solid rgba(16,185,129,0.3);
+            color: #6ee7b7;
+        }
+        .status-msg.error {
+            background: rgba(239,68,68,0.12);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: #fca5a5;
+        }
+
+        /* ── Divider ── */
+        .divider {
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.07);
+            margin: 28px 0;
+        }
+
+        /* ── Change PIN section ── */
+        .change-pin-toggle {
+            font-size: 13px;
+            color: var(--text-muted);
+            cursor: pointer;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            background: none;
+            border: none;
+            font-family: inherit;
+            padding: 0;
+        }
+        .change-pin-toggle:hover { color: var(--gold-light); }
+
+        /* ── Back link ── */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+            font-size: 13px;
+            text-decoration: none;
+            margin-bottom: 28px;
+            transition: color 0.2s;
+            position: relative;
+            z-index: 1;
+        }
+        .back-link:hover { color: var(--text-secondary); }
+
+        /* ── Spin animation ── */
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spin { animation: spin 1s linear infinite; }
+
+        /* ── Responsive ── */
+        @media (max-width: 480px) {
+            .card { padding: 24px 18px; }
+            .tier-inputs { flex-wrap: wrap; }
+            .tier-dash { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <div class="brand-row">
+            <img src="{{ url_for('static', filename='images/flowmediq-logo.png') }}" alt="FlowMediQ">
+            <h1>Pricing Configuration</h1>
+        </div>
+        <p>FlowMediQ AI Hair Studio — Practitioner Portal</p>
+        <div class="user-chip">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+            </svg>
+            {{ user.username or user.email }}
+        </div>
+    </div>
+
+    <a href="/" class="back-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"/>
+            <polyline points="12 19 5 12 12 5"/>
+        </svg>
+        Back to main app
+    </a>
+
+    <!-- ══════════════════════════════════════
+         SCREEN 1: Set PIN (first-time user)
+    ══════════════════════════════════════ -->
+    <div class="card" id="screen-set-pin" style="{{ '' if not has_pin else 'display:none;' }}">
+        <div class="card-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            Set Your Pricing PIN
+        </div>
+        <p class="card-desc">
+            This PIN protects your pricing configuration. You will need to enter it every time you visit this page.
+            Choose a 4–8 digit PIN that only you know.
+        </p>
+        <div class="set-pin-form">
+            <div class="form-group">
+                <label>Choose a PIN (4–8 digits)</label>
+                <input type="password" id="new-pin-input" inputmode="numeric" pattern="[0-9]*"
+                       maxlength="8" placeholder="••••" autocomplete="new-password">
+            </div>
+            <div class="form-group">
+                <label>Confirm PIN</label>
+                <input type="password" id="confirm-pin-input" inputmode="numeric" pattern="[0-9]*"
+                       maxlength="8" placeholder="••••" autocomplete="new-password">
+            </div>
+            <p id="set-pin-error" class="pin-error"></p>
+            <button class="btn btn-gold btn-full" onclick="submitSetPin()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                Set PIN &amp; Continue
+            </button>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SCREEN 2: Enter PIN
+    ══════════════════════════════════════ -->
+    <div class="card" id="screen-enter-pin" style="{{ 'display:none;' if not has_pin or pin_verified else '' }}">
+        <div class="card-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            Enter Your PIN
+        </div>
+        <p class="card-desc">Enter your pricing configuration PIN to access your cost settings.</p>
+
+        <div class="pin-dots" id="pin-dots">
+            <div class="pin-dot" id="dot-0"></div>
+            <div class="pin-dot" id="dot-1"></div>
+            <div class="pin-dot" id="dot-2"></div>
+            <div class="pin-dot" id="dot-3"></div>
+        </div>
+
+        <div class="pin-grid">
+            <button class="pin-key" onclick="pinKey('1')">1</button>
+            <button class="pin-key" onclick="pinKey('2')">2</button>
+            <button class="pin-key" onclick="pinKey('3')">3</button>
+            <button class="pin-key" onclick="pinKey('4')">4</button>
+            <button class="pin-key" onclick="pinKey('5')">5</button>
+            <button class="pin-key" onclick="pinKey('6')">6</button>
+            <button class="pin-key" onclick="pinKey('7')">7</button>
+            <button class="pin-key" onclick="pinKey('8')">8</button>
+            <button class="pin-key" onclick="pinKey('9')">9</button>
+            <button class="pin-key pin-clear" onclick="pinBackspace()">⌫</button>
+            <button class="pin-key" onclick="pinKey('0')">0</button>
+            <button class="pin-key pin-submit" onclick="submitPin()">✓</button>
+        </div>
+
+        <p id="pin-error" class="pin-error"></p>
+        <p class="pin-hint">Tip: You can also type your PIN on a keyboard and press Enter.</p>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SCREEN 3: Pricing Form
+    ══════════════════════════════════════ -->
+    <div class="card" id="screen-pricing" style="{{ '' if pin_verified else 'display:none;' }}">
+        <div class="card-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+            Your Procedure Pricing
+        </div>
+        <p class="card-desc">
+            Set the cost estimates your clients will see for each graft tier.
+            Each tier can have a price range (e.g. $8,000 – $9,500) or a fixed price.
+            Changes apply only to your account.
+        </p>
+
+        <div class="tiers-list" id="tiers-list"></div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-gold" onclick="savePricing()" id="save-btn" style="flex:1;min-width:140px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/>
+                    <polyline points="7 3 7 8 15 8"/>
+                </svg>
+                Save Pricing
+            </button>
+            <button class="btn btn-danger" onclick="resetPricing()" id="reset-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="1 4 1 10 7 10"/>
+                    <path d="M3.51 15a9 9 0 1 0 .49-4.95"/>
+                </svg>
+                Reset to Defaults
+            </button>
+        </div>
+
+        <div class="status-msg" id="save-status"></div>
+
+        <hr class="divider">
+
+        <!-- Change PIN -->
+        <div>
+            <button class="change-pin-toggle" onclick="toggleChangePinForm()">Change my PIN</button>
+            <div id="change-pin-form" style="display:none;margin-top:16px;">
+                <div class="set-pin-form">
+                    <div class="form-group">
+                        <label>New PIN (4–8 digits)</label>
+                        <input type="password" id="change-pin-new" inputmode="numeric" pattern="[0-9]*"
+                               maxlength="8" placeholder="••••" autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm New PIN</label>
+                        <input type="password" id="change-pin-confirm" inputmode="numeric" pattern="[0-9]*"
+                               maxlength="8" placeholder="••••" autocomplete="new-password">
+                    </div>
+                    <p id="change-pin-error" class="pin-error"></p>
+                    <button class="btn btn-gold" onclick="submitChangePin()" style="width:100%;">
+                        Update PIN
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ── Server-injected data ──
+        const INITIAL_TIERS = {{ tiers | tojson }};
+        const DEFAULT_TIERS = {{ default_tiers | tojson }};
+        const HAS_PIN = {{ 'true' if has_pin else 'false' }};
+        const PIN_VERIFIED = {{ 'true' if pin_verified else 'false' }};
+
+        // ── PIN pad state ──
+        let pinBuffer = '';
+        const MAX_PIN = 8;
+
+        function updateDots() {
+            const dots = document.querySelectorAll('.pin-dot');
+            dots.forEach((d, i) => d.classList.toggle('filled', i < pinBuffer.length));
+        }
+
+        function pinKey(digit) {
+            if (pinBuffer.length >= MAX_PIN) return;
+            pinBuffer += digit;
+            updateDots();
+            document.getElementById('pin-error').textContent = '';
+        }
+
+        function pinBackspace() {
+            pinBuffer = pinBuffer.slice(0, -1);
+            updateDots();
+        }
+
+        async function submitPin() {
+            if (!pinBuffer) { document.getElementById('pin-error').textContent = 'Please enter your PIN.'; return; }
+            const btn = document.querySelector('.pin-key.pin-submit');
+            btn.disabled = true;
+            btn.textContent = '…';
+            try {
+                const resp = await fetch('/api/pricing-config/verify-pin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({pin: pinBuffer})
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    document.getElementById('screen-enter-pin').style.display = 'none';
+                    document.getElementById('screen-pricing').style.display = '';
+                    renderTiersForm(INITIAL_TIERS);
+                } else {
+                    document.getElementById('pin-error').textContent = data.error || 'Incorrect PIN.';
+                    pinBuffer = '';
+                    updateDots();
+                }
+            } catch(e) {
+                document.getElementById('pin-error').textContent = 'Network error. Please try again.';
+            }
+            btn.disabled = false;
+            btn.textContent = '✓';
+        }
+
+        // Keyboard support for PIN entry
+        document.addEventListener('keydown', function(e) {
+            const pinScreen = document.getElementById('screen-enter-pin');
+            if (pinScreen && pinScreen.style.display !== 'none') {
+                if (e.key >= '0' && e.key <= '9') pinKey(e.key);
+                else if (e.key === 'Backspace') pinBackspace();
+                else if (e.key === 'Enter') submitPin();
+            }
+        });
+
+        // ── Set PIN ──
+        async function submitSetPin() {
+            const pin = document.getElementById('new-pin-input').value.trim();
+            const confirm = document.getElementById('confirm-pin-input').value.trim();
+            const errEl = document.getElementById('set-pin-error');
+            errEl.textContent = '';
+            if (!pin || pin.length < 4) { errEl.textContent = 'PIN must be at least 4 digits.'; return; }
+            if (!/^\d+$/.test(pin)) { errEl.textContent = 'PIN must contain digits only.'; return; }
+            if (pin !== confirm) { errEl.textContent = 'PINs do not match.'; return; }
+            try {
+                const resp = await fetch('/api/pricing-config/set-pin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({pin})
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    document.getElementById('screen-set-pin').style.display = 'none';
+                    document.getElementById('screen-pricing').style.display = '';
+                    renderTiersForm(INITIAL_TIERS);
+                } else {
+                    errEl.textContent = data.error || 'Failed to set PIN.';
+                }
+            } catch(e) {
+                errEl.textContent = 'Network error. Please try again.';
+            }
+        }
+
+        // ── Change PIN ──
+        function toggleChangePinForm() {
+            const form = document.getElementById('change-pin-form');
+            form.style.display = form.style.display === 'none' ? '' : 'none';
+        }
+
+        async function submitChangePin() {
+            const pin = document.getElementById('change-pin-new').value.trim();
+            const confirm = document.getElementById('change-pin-confirm').value.trim();
+            const errEl = document.getElementById('change-pin-error');
+            errEl.textContent = '';
+            if (!pin || pin.length < 4) { errEl.textContent = 'PIN must be at least 4 digits.'; return; }
+            if (!/^\d+$/.test(pin)) { errEl.textContent = 'PIN must contain digits only.'; return; }
+            if (pin !== confirm) { errEl.textContent = 'PINs do not match.'; return; }
+            try {
+                const resp = await fetch('/api/pricing-config/set-pin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({pin})
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    showStatus('PIN updated successfully.', 'success');
+                    document.getElementById('change-pin-form').style.display = 'none';
+                    document.getElementById('change-pin-new').value = '';
+                    document.getElementById('change-pin-confirm').value = '';
+                } else {
+                    errEl.textContent = data.error || 'Failed to update PIN.';
+                }
+            } catch(e) {
+                errEl.textContent = 'Network error. Please try again.';
+            }
+        }
+
+        // ── Tier form rendering ──
+        function renderTiersForm(tiers) {
+            const list = document.getElementById('tiers-list');
+            list.innerHTML = '';
+            tiers.forEach((tier, i) => {
+                const isFixed = tier.fixed !== null && tier.fixed !== undefined;
+                list.innerHTML += `
+                <div class="tier-card" id="tier-card-${i}">
+                    <div class="tier-label">${tier.label || 'Tier ' + (i+1)}</div>
+                    <div class="tier-type-toggle">
+                        <button class="toggle-btn ${!isFixed ? 'active' : ''}" onclick="setTierType(${i}, 'range')">Price Range</button>
+                        <button class="toggle-btn ${isFixed ? 'active' : ''}" onclick="setTierType(${i}, 'fixed')">Fixed Price</button>
+                    </div>
+                    <div class="tier-inputs" id="tier-range-${i}" style="${isFixed ? 'display:none' : ''}">
+                        <div class="tier-field">
+                            <label>Min ($)</label>
+                            <input type="number" id="tier-min-${i}" value="${tier.min || ''}" min="0" step="100" placeholder="e.g. 7000">
+                        </div>
+                        <div class="tier-dash">–</div>
+                        <div class="tier-field">
+                            <label>Max ($)</label>
+                            <input type="number" id="tier-max-${i}" value="${tier.max || ''}" min="0" step="100" placeholder="e.g. 8500">
+                        </div>
+                    </div>
+                    <div class="tier-inputs" id="tier-fixed-${i}" style="${!isFixed ? 'display:none' : ''}">
+                        <div class="tier-field">
+                            <label>Fixed Price ($)</label>
+                            <input type="number" id="tier-fixed-val-${i}" value="${tier.fixed || ''}" min="0" step="100" placeholder="e.g. 10500">
+                        </div>
+                    </div>
+                </div>`;
+            });
+        }
+
+        function setTierType(i, type) {
+            const card = document.getElementById(`tier-card-${i}`);
+            const btns = card.querySelectorAll('.toggle-btn');
+            btns[0].classList.toggle('active', type === 'range');
+            btns[1].classList.toggle('active', type === 'fixed');
+            document.getElementById(`tier-range-${i}`).style.display = type === 'range' ? '' : 'none';
+            document.getElementById(`tier-fixed-${i}`).style.display = type === 'fixed' ? '' : 'none';
+        }
+
+        function collectTiers() {
+            return INITIAL_TIERS.map((tier, i) => {
+                const card = document.getElementById(`tier-card-${i}`);
+                const isFixed = card.querySelectorAll('.toggle-btn')[1].classList.contains('active');
+                if (isFixed) {
+                    const fixed = parseFloat(document.getElementById(`tier-fixed-val-${i}`).value) || null;
+                    return {...tier, min: null, max: null, fixed};
+                } else {
+                    const min = parseFloat(document.getElementById(`tier-min-${i}`).value) || null;
+                    const max = parseFloat(document.getElementById(`tier-max-${i}`).value) || null;
+                    return {...tier, min, max, fixed: null};
+                }
+            });
+        }
+
+        async function savePricing() {
+            const btn = document.getElementById('save-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Saving…';
+            const tiers = collectTiers();
+            try {
+                const resp = await fetch('/api/pricing-config/save', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({tiers})
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    showStatus('✓ Pricing saved successfully. Clients will see your updated prices immediately.', 'success');
+                } else {
+                    showStatus('Error: ' + (data.error || 'Failed to save.'), 'error');
+                }
+            } catch(e) {
+                showStatus('Network error. Please try again.', 'error');
+            }
+            btn.disabled = false;
+            btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Pricing';
+        }
+
+        async function resetPricing() {
+            if (!confirm('Reset all pricing to system defaults? This cannot be undone.')) return;
+            const btn = document.getElementById('reset-btn');
+            btn.disabled = true;
+            try {
+                const resp = await fetch('/api/pricing-config/reset', {method: 'POST'});
+                const data = await resp.json();
+                if (data.success) {
+                    renderTiersForm(data.tiers);
+                    showStatus('Pricing reset to defaults.', 'success');
+                } else {
+                    showStatus('Error: ' + (data.error || 'Failed to reset.'), 'error');
+                }
+            } catch(e) {
+                showStatus('Network error. Please try again.', 'error');
+            }
+            btn.disabled = false;
+        }
+
+        function showStatus(msg, type) {
+            const el = document.getElementById('save-status');
+            el.textContent = msg;
+            el.className = 'status-msg ' + type;
+            el.style.display = '';
+            setTimeout(() => { el.style.display = 'none'; }, 6000);
+        }
+
+        // ── Init ──
+        if (PIN_VERIFIED) {
+            renderTiersForm(INITIAL_TIERS);
+        }
+
+        // Enter key on set-pin inputs
+        document.getElementById('confirm-pin-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') submitSetPin(); });
+        document.getElementById('new-pin-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('confirm-pin-input').focus(); });
+    </script>
+</body>
+</html>

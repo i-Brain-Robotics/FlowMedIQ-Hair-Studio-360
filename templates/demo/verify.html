@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Identity — FlowGeniQ</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #1a1a2e 40%, #16213e 70%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            color: #fff;
+            line-height: 1.6;
+        }
+        .verify-container { width: 100%; max-width: 520px; }
+        .verify-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(168,85,247,0.2);
+            border-radius: 24px;
+            padding: 48px 36px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+        .brand { text-align: center; margin-bottom: 32px; }
+        .brand h1 {
+            font-size: 24px; font-weight: 800;
+            background: linear-gradient(135deg, #fff, #c4b5fd);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+        }
+        .brand p { color: #94a3b8; font-size: 14px; }
+        .step-title {
+            font-size: 18px; font-weight: 700; color: #e2e8f0;
+            text-align: center; margin-bottom: 24px;
+        }
+        .verification-items { display: flex; flex-direction: column; gap: 16px; margin-bottom: 28px; }
+        .verify-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 16px 18px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            transition: all 0.3s;
+        }
+        .verify-item.verified {
+            border-color: rgba(16,185,129,0.3);
+            background: rgba(16,185,129,0.06);
+        }
+        .verify-item.pending {
+            border-color: rgba(251,191,36,0.3);
+            background: rgba(251,191,36,0.04);
+        }
+        .status-icon {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .status-icon.verified { background: rgba(16,185,129,0.15); color: #34d399; }
+        .status-icon.pending { background: rgba(251,191,36,0.15); color: #fbbf24; }
+        .verify-info { flex: 1; }
+        .verify-info h4 { font-size: 14px; font-weight: 600; color: #e2e8f0; }
+        .verify-info p { font-size: 12px; color: #94a3b8; }
+        .verify-info .status-text { font-size: 12px; font-weight: 600; }
+        .verify-info .status-text.verified { color: #34d399; }
+        .verify-info .status-text.pending { color: #fbbf24; }
+        .phone-code-section {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .phone-code-section h4 {
+            font-size: 14px; font-weight: 600; color: #e2e8f0; margin-bottom: 12px;
+        }
+        .code-input-row {
+            display: flex; gap: 10px; align-items: center;
+        }
+        .code-input-row input {
+            flex: 1;
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 18px;
+            font-family: 'Inter', monospace;
+            letter-spacing: 6px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .code-input-row input:focus {
+            border-color: rgba(168,85,247,0.5);
+            box-shadow: 0 0 0 3px rgba(168,85,247,0.15);
+        }
+        .code-input-row input::placeholder { letter-spacing: 2px; color: #64748b; font-size: 14px; }
+        .btn-verify {
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #6c5ce7, #a855f7);
+            border: none; border-radius: 12px;
+            color: #fff; font-size: 14px; font-weight: 700;
+            font-family: inherit; cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        .btn-verify:hover { box-shadow: 0 4px 20px rgba(168,85,247,0.4); }
+        .btn-verify:disabled { opacity: 0.5; cursor: not-allowed; }
+        .resend-row {
+            display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap;
+        }
+        .btn-resend {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            color: #94a3b8;
+            font-size: 12px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-resend:hover { border-color: rgba(168,85,247,0.4); color: #c4b5fd; }
+        .btn-resend:disabled { opacity: 0.4; cursor: not-allowed; }
+        .error-msg {
+            background: rgba(239,68,68,0.12);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #fca5a5;
+            margin-top: 12px;
+            display: none;
+        }
+        .success-msg {
+            background: rgba(16,185,129,0.12);
+            border: 1px solid rgba(16,185,129,0.3);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #6ee7b7;
+            margin-top: 12px;
+            display: none;
+        }
+        .waiting-note {
+            text-align: center;
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 20px;
+        }
+        .waiting-note .pulse {
+            display: inline-block;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #a855f7;
+            margin-right: 6px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        @media (max-width: 480px) {
+            .verify-card { padding: 32px 20px; }
+            .code-input-row { flex-direction: column; }
+            .btn-verify { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="verify-container">
+        <div class="verify-card">
+            <div class="brand">
+                <h1>FlowGeniQ</h1>
+                <p>Verify your identity to access the demo</p>
+            </div>
+
+            <h3 class="step-title">Two-Step Verification</h3>
+
+            <div class="verification-items">
+                <!-- Email Verification Status -->
+                <div class="verify-item {{ 'verified' if lead['email_verified'] else 'pending' }}" id="emailItem">
+                    <div class="status-icon {{ 'verified' if lead['email_verified'] else 'pending' }}" id="emailIcon">
+                        {% if lead['email_verified'] %}
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        {% else %}
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        {% endif %}
+                    </div>
+                    <div class="verify-info">
+                        <h4>Email Verification</h4>
+                        <p>{{ lead['email'] }}</p>
+                        <span class="status-text {{ 'verified' if lead['email_verified'] else 'pending' }}" id="emailStatus">
+                            {{ 'Verified' if lead['email_verified'] else 'Check your inbox — click the verification link' }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Phone Verification Status -->
+                <div class="verify-item {{ 'verified' if lead['phone_verified'] else 'pending' }}" id="phoneItem">
+                    <div class="status-icon {{ 'verified' if lead['phone_verified'] else 'pending' }}" id="phoneIcon">
+                        {% if lead['phone_verified'] %}
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        {% else %}
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        {% endif %}
+                    </div>
+                    <div class="verify-info">
+                        <h4>Phone Verification</h4>
+                        <p>{{ lead['phone'] }}</p>
+                        <span class="status-text {{ 'verified' if lead['phone_verified'] else 'pending' }}" id="phoneStatus">
+                            {{ 'Verified' if lead['phone_verified'] else 'Enter the 6-digit code sent to your phone' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phone Code Entry -->
+            {% if not lead['phone_verified'] %}
+            <div class="phone-code-section" id="phoneCodeSection">
+                <h4>Enter SMS Verification Code</h4>
+                <div class="code-input-row">
+                    <input type="text" id="phoneCode" maxlength="6" placeholder="000000" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code">
+                    <button class="btn-verify" id="verifyPhoneBtn" onclick="verifyPhone()">Verify</button>
+                </div>
+                <div class="resend-row">
+                    <button class="btn-resend" id="resendPhoneBtn" onclick="resendPhone()">Resend SMS Code</button>
+                    <button class="btn-resend" id="resendEmailBtn" onclick="resendEmail()">Resend Email</button>
+                </div>
+                <div class="error-msg" id="phoneError"></div>
+                <div class="success-msg" id="phoneSuccess"></div>
+            </div>
+            {% endif %}
+
+            <div class="waiting-note" id="waitingNote">
+                <span class="pulse"></span>
+                Checking verification status automatically...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let pollInterval = null;
+
+        function startPolling() {
+            pollInterval = setInterval(checkStatus, 3000);
+        }
+
+        async function checkStatus() {
+            try {
+                const resp = await fetch('/demo/t/{{ slug }}/check-status');
+                const data = await resp.json();
+
+                if (data.email_verified) {
+                    updateItemStatus('email', true);
+                }
+                if (data.phone_verified) {
+                    updateItemStatus('phone', true);
+                    const codeSection = document.getElementById('phoneCodeSection');
+                    if (codeSection) codeSection.style.display = 'none';
+                }
+                if (data.both_verified) {
+                    clearInterval(pollInterval);
+                    document.getElementById('waitingNote').innerHTML = '<span class="pulse" style="background:#34d399;"></span> Both verified! Redirecting to demo...';
+                    setTimeout(() => {
+                        window.location.href = '/demo/t/{{ slug }}/app';
+                    }, 1000);
+                }
+            } catch (e) {
+                console.error('Status check error:', e);
+            }
+        }
+
+        function updateItemStatus(type, verified) {
+            const item = document.getElementById(type + 'Item');
+            const icon = document.getElementById(type + 'Icon');
+            const status = document.getElementById(type + 'Status');
+
+            if (verified) {
+                item.className = 'verify-item verified';
+                icon.className = 'status-icon verified';
+                icon.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+                status.className = 'status-text verified';
+                status.textContent = 'Verified';
+            }
+        }
+
+        async function verifyPhone() {
+            const code = document.getElementById('phoneCode').value.trim();
+            const btn = document.getElementById('verifyPhoneBtn');
+            const errorEl = document.getElementById('phoneError');
+            const successEl = document.getElementById('phoneSuccess');
+
+            if (!code || code.length !== 6) {
+                errorEl.textContent = 'Please enter the 6-digit code.';
+                errorEl.style.display = 'block';
+                successEl.style.display = 'none';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Verifying...';
+            errorEl.style.display = 'none';
+            successEl.style.display = 'none';
+
+            try {
+                const resp = await fetch('/demo/t/{{ slug }}/verify-phone', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code })
+                });
+                const data = await resp.json();
+
+                if (data.success) {
+                    successEl.textContent = data.message || 'Phone verified!';
+                    successEl.style.display = 'block';
+                    updateItemStatus('phone', true);
+                    if (data.redirect) {
+                        setTimeout(() => { window.location.href = data.redirect; }, 800);
+                    }
+                } else {
+                    errorEl.textContent = data.error || 'Verification failed.';
+                    errorEl.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'Verify';
+                }
+            } catch (e) {
+                errorEl.textContent = 'Network error. Please try again.';
+                errorEl.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Verify';
+            }
+        }
+
+        async function resendPhone() {
+            const btn = document.getElementById('resendPhoneBtn');
+            const successEl = document.getElementById('phoneSuccess');
+            const errorEl = document.getElementById('phoneError');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+
+            try {
+                const resp = await fetch('/demo/t/{{ slug }}/resend-phone', { method: 'POST' });
+                const data = await resp.json();
+                if (data.success) {
+                    successEl.textContent = data.message || 'New code sent!';
+                    successEl.style.display = 'block';
+                    errorEl.style.display = 'none';
+                } else {
+                    errorEl.textContent = data.error || 'Failed to resend.';
+                    errorEl.style.display = 'block';
+                }
+            } catch (e) {
+                errorEl.textContent = 'Network error.';
+                errorEl.style.display = 'block';
+            }
+            btn.disabled = false;
+            btn.textContent = 'Resend SMS Code';
+        }
+
+        async function resendEmail() {
+            const btn = document.getElementById('resendEmailBtn');
+            const successEl = document.getElementById('phoneSuccess');
+            const errorEl = document.getElementById('phoneError');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+
+            try {
+                const resp = await fetch('/demo/t/{{ slug }}/resend-email', { method: 'POST' });
+                const data = await resp.json();
+                if (data.success) {
+                    successEl.textContent = data.message || 'Verification email resent!';
+                    successEl.style.display = 'block';
+                    errorEl.style.display = 'none';
+                } else {
+                    errorEl.textContent = data.error || 'Failed to resend.';
+                    errorEl.style.display = 'block';
+                }
+            } catch (e) {
+                errorEl.textContent = 'Network error.';
+                errorEl.style.display = 'block';
+            }
+            btn.disabled = false;
+            btn.textContent = 'Resend Email';
+        }
+
+        // Auto-submit on 6 digits
+        document.getElementById('phoneCode')?.addEventListener('input', function() {
+            if (this.value.length === 6) {
+                verifyPhone();
+            }
+        });
+
+        // Start polling
+        startPolling();
+    </script>
+</body>
+</html>

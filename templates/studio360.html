@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Hair Studio 360</title>
+  <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/studio360.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Hair Studio 360 home"><img src="{{ url_for('static', filename='images/flowmediq-logo.png') }}" alt=""><span>HAIR STUDIO <b>360</b><small>BY FLOWMEDIQ</small></span></a>
+    <div class="account"><span>{{ user.username or user.email }}</span><a href="{{ suite_url }}">Suite</a><a href="/logout">Sign out</a></div>
+  </header>
+  <main>
+    <section class="intro"><div><p class="eyebrow">ONE CONSULTATION. EVERY PATH.</p><h1>See the possibilities.<br><span>Plan the difference.</span></h1><p class="lede">Explore hair transplantation, six-month non-surgical response, and a combined plan with fewer grafts.</p></div><div class="time-badge"><span>6</span><div>MONTHS<small>Non-surgical horizon</small></div></div></section>
+    <nav class="mode-tabs" aria-label="Simulation modes" role="tablist">
+      <button role="tab" id="tab-transplant" aria-controls="legacy-panel" aria-selected="false" tabindex="-1" data-mode="transplant">Hair transplant</button>
+      <button role="tab" id="tab-nonsurgical" aria-controls="planner-panel" aria-selected="true" tabindex="0" data-mode="nonsurgical">Non-surgical <span>6 months</span></button>
+      <button role="tab" id="tab-compare" aria-controls="planner-panel" aria-selected="false" tabindex="-1" data-mode="compare">Side-by-side</button>
+      <button role="tab" id="tab-combined" aria-controls="planner-panel" aria-selected="false" tabindex="-1" data-mode="combined">Combined + graft savings</button>
+    </nav>
+    <section id="legacy-panel" role="tabpanel" aria-labelledby="tab-transplant" hidden>
+      <div class="panel-heading"><div><p class="eyebrow">ORIGINAL TRANSPLANT STUDIO</p><h2>Your complete transplant workflow</h2></div><p>The regular transplant preview represents its selected target. The comparison panel can separately model month-six visibility.</p></div>
+      <iframe id="transplant-frame" title="Hair transplant simulation" data-src="/transplant?embed=1&studio360=1"></iframe>
+    </section>
+    <section id="planner-panel" role="tabpanel" aria-labelledby="tab-nonsurgical">
+      <div class="workspace">
+        <aside class="controls">
+          <section class="card"><p class="eyebrow">01 / SHARED PHOTO</p><div class="upload-box"><img id="source-thumb" alt="Uploaded baseline" hidden><div id="upload-placeholder"><span class="upload-icon">↑</span><strong>Start with the same photo</strong><p>PNG, JPG or WEBP · up to 16 MB</p></div><label class="button secondary upload-label" for="photo-input">Choose photo</label><input id="photo-input" type="file" accept="image/png,image/jpeg,image/webp" hidden></div><p class="helper">The same baseline is used for all comparison images. Uploads also carry into the transplant studio.</p></section>
+          <section class="card"><p class="eyebrow">02 / NON-SURGICAL PROTOCOL</p><label for="protocol">Treatment</label><select id="protocol">{% for key, p in protocols.items() %}<option value="{{ key }}" {% if key=='combined' %}selected{% endif %}>{{ p.label }}</option>{% endfor %}</select>
+            <div class="preset-line" id="preset-density"></div><label id="growth-label" for="density-change">Density increase (%)</label><input id="density-change" type="number" min="0" max="200" step="0.1" value="37.5">
+            <label for="diameter-mode">Thickness calculation</label><select id="diameter-mode"><option value="absolute">Add micrometers (μm)</option><option value="percent">Increase by percentage (%)</option></select>
+            <div class="preset-line" id="preset-thickness"></div><label id="diameter-label" for="diameter-change">Shaft diameter increase (μm)</label><input id="diameter-change" type="number" min="0" max="200" step="0.1" value="21.5">
+            <button class="text-button" id="reset-preset">Reset protocol defaults</button><button class="text-button" id="study-preset" hidden>Use measured 1565 nm reference: +2.38 μm</button>
+          </section>
+          <section class="card"><p class="eyebrow">03 / TRANSPLANT ASSUMPTIONS</p><label for="horizon">Transplant comparison horizon</label><select id="horizon"><option value="six_months">Month 6</option><option value="mature">Mature transplant target</option></select><div class="field-pair"><div><label for="hairs-per-graft">Hairs per graft</label><input id="hairs-per-graft" type="number" min="1" max="4" step="0.1" value="2"></div><div><label for="survival">Graft survival (%)</label><input id="survival" type="number" min="1" max="100" step="1" value="90"></div></div><label for="visibility">Visible growth at month 6 (%)</label><input id="visibility" type="number" min="1" max="100" step="1" value="60"><p class="helper">Survival and visible growth are editable planning assumptions. The same values apply to transplant alone and the combined plan.</p></section>
+        </aside>
+        <div class="results-column">
+          <section class="card measurements"><div class="section-title"><div><p class="eyebrow">REGION BY REGION</p><h2>Baseline &amp; transplant plan</h2></div><button id="toggle-zones" class="text-button" aria-expanded="false">Show zone reference</button></div>
+            <img id="zones-reference" src="{{ url_for('static', filename='images/scalp_zones.png') }}" alt="Scalp treatment zone reference" hidden>
+            <p class="helper">Illustrative sample inputs are loaded. Replace them with measured values for the selected areas; numbers are not inferred from the photograph.</p>
+            <div class="table-scroll"><table class="zone-table"><thead><tr><th>Zone</th><th>Area<br>cm²</th><th>Terminal<br>hairs/cm²</th><th>Diameter<br>μm</th><th>Responsive<br>%</th><th>Grafts<br>alone</th><th></th></tr></thead><tbody id="zone-rows"></tbody></table></div>
+            <div class="add-zone"><label for="add-zone-select" class="sr-only">Zone to add</label><select id="add-zone-select">{% for key, info in area_info.items() %}{% if key in graft_counts %}<option value="{{ key }}">{{ info.name }}</option>{% endif %}{% endfor %}</select><button id="add-zone" class="button secondary">Add zone</button></div>
+            <p class="helper">Responsive % is the proportion of this zone expected to respond. A zone with zero baseline terminal hairs receives no automatic non-surgical gain. Gains cannot replace grafts in another zone.</p>
+          </section>
+          <div id="status" role="status" aria-live="polite"></div>
+          <section class="metric-grid" id="metrics" aria-label="Simulated result numbers"></section>
+          <section class="savings-card" id="savings" hidden><div><p class="eyebrow">COMBINED PLAN</p><h2><span id="saved-count">—</span> fewer grafts</h2><p id="saved-detail"></p></div><div class="savings-marker" id="saved-percent"></div><p class="helper">Meets or exceeds estimated terminal hair count in the same regions at the selected horizon. Equal cosmetic results are not established. Thickness is not converted into graft savings.</p></section>
+          <section class="card"><div class="section-title"><div><p class="eyebrow">VISUALIZE YOUR PLAN</p><h2 id="preview-title">Six-month non-surgical preview</h2></div><span class="pill">Illustrative simulation</span></div><label class="review-check"><input type="checkbox" id="reviewed"> I have reviewed the baseline measurements and treatment assumptions.</label><div id="preview-grid" class="preview-grid"></div><p class="helper">Each newly generated image uses your account’s generation credits. Changing the photo or assumptions clears outdated previews. Cached results do not generate another image.</p></section>
+          <section class="card"><div class="section-title"><div><p class="eyebrow">THE SAME TARGET, THREE PATHS</p><h2>Compare the numbers</h2></div><button id="download-report" class="button secondary">Save report</button></div><div class="table-scroll"><table class="comparison-table"><thead><tr><th>Metric</th><th>Baseline</th><th>Transplant alone</th><th>Non-surgical</th><th>Combined plan</th></tr></thead><tbody id="comparison-body"></tbody></table></div><p id="timepoint-note" class="helper"></p></section>
+          <details class="card evidence"><summary>Assumptions, research &amp; calculation method</summary><p id="density-evidence"></p><p id="thickness-evidence"></p><p>Thickness presets and density presets are independently entered scenarios. A percentage change and an absolute micron change are alternative methods; the app never adds both.</p><p><strong>Research reference:</strong> Qu et al. (2024) measured 61.55 → 63.93 μm with 1565 nm laser at week 10 (+2.38 μm). Lee et al. studied <strong>1550 nm</strong> laser in female pattern hair loss, reporting 58 → 75 μm after 5 months. Related wavelengths and treatment schedules are not interchangeable evidence.</p><p><a href="https://doi.org/10.1111/jocd.16173" target="_blank" rel="noopener noreferrer">Qu et al., 1565 nm study</a> · <a href="https://doi.org/10.1111/j.1468-3083.2011.04183.x" target="_blank" rel="noopener noreferrer">Lee et al., 1550 nm study</a> · <a href="https://almainc.com/product/alma-ted/" target="_blank" rel="noopener noreferrer">Alma TED manufacturer data</a></p><p>Density × measured area gives hair count. Added hairs are divided by hairs per graft × survival × visible growth to estimate a graft equivalent. Remaining grafts are rounded up within each zone and never below zero. Diameter is reported independently; grafts and hairs are distinct units.</p><p>Reported shedding stabilization is qualitative context and is not used as a numerical graft reduction. A report of reduced shedding is not a guarantee of complete cessation within a fixed number of weeks.</p></details>
+        </div>
+      </div>
+    </section>
+    <footer>Hair Studio 360 · Physician planning simulation · Individual response varies</footer>
+  </main>
+  <script>window.STUDIO360_CONFIG = {{ {'protocols': protocols, 'graftCounts': graft_counts, 'areas': area_info} | tojson }};</script>
+  <script src="{{ url_for('static', filename='js/studio360.js') }}" defer></script>
+</body>
+</html>

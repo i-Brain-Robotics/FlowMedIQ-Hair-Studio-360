@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowGeniQ — AI Hair Restoration Demo</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Override user-bar for demo mode */
+        .user-bar {
+            background: rgba(26, 26, 46, 0.97);
+        }
+        .demo-badge-bar {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(139,92,246,0.1));
+            border: 1px solid rgba(168,85,247,0.3);
+            border-radius: 16px;
+            padding: 4px 14px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #c4b5fd;
+        }
+        .demo-user-name {
+            color: #e2e8f0;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .demo-one-time-notice {
+            background: linear-gradient(135deg, rgba(251,191,36,0.08), rgba(245,158,11,0.05));
+            border: 1px solid rgba(251,191,36,0.2);
+            border-radius: 12px;
+            padding: 14px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            color: #fbbf24;
+        }
+        .demo-one-time-notice svg { flex-shrink: 0; }
+        .demo-one-time-notice strong { color: #fde68a; }
+        /* Hide credit-related elements in demo */
+        .credit-estimate { display: none !important; }
+        /* Demo CTA overlay after generation */
+        .demo-cta-overlay {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(15,12,41,0.98) 0%, rgba(15,12,41,0.9) 70%, transparent 100%);
+            padding: 32px 24px 28px;
+            z-index: 999;
+            text-align: center;
+            display: none;
+        }
+        .demo-cta-overlay.visible { display: block; }
+        .demo-cta-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 12px;
+        }
+        .demo-cta-sub {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 16px;
+        }
+        .btn-subscribe-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 36px;
+            background: linear-gradient(135deg, #6c5ce7, #a855f7);
+            border: none;
+            border-radius: 14px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .btn-subscribe-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(168,85,247,0.4);
+        }
+    </style>
+</head>
+<body>
+    <!-- Demo User Bar -->
+    <div class="user-bar">
+        <div class="user-info">
+            <div class="user-avatar" style="background: linear-gradient(135deg, #6c5ce7, #a855f7);">{{ lead['full_name'][0]|upper }}</div>
+            <span class="demo-user-name">{{ lead['full_name'] }}</span>
+            <span class="demo-badge-bar">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                Free Demo
+            </span>
+        </div>
+        <div class="user-stats">
+            <span class="usage-info" style="color: #fbbf24; font-size: 13px;">1 Free Generation</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <div style="display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;">
+                <img src="{{ url_for('static', filename='images/flowmediq-logo.png') }}" alt="FlowGeniQ" style="width:56px;height:56px;border-radius:12px;object-fit:contain;display:block;">
+                <h1 style="margin:0;">FlowGeniQ AI Hair Studio</h1>
+            </div>
+            <p>AI Hair Restoration Simulation — Free Demo</p>
+        </header>
+
+        <div class="main-content">
+            <!-- One-time notice -->
+            <div class="demo-one-time-notice">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 8v4"/>
+                    <path d="M12 16h.01"/>
+                </svg>
+                <div>
+                    <strong>One-Time Demo:</strong> You have 1 free AI hair restoration simulation. Upload your photo, select treatment areas, and generate your preview. <a href="https://suite.flowmediq.io" style="color:#a78bfa;" target="_blank">Subscribe</a> for unlimited access.
+                </div>
+            </div>
+
+            <!-- Step 1: Upload Image -->
+            <div class="step" id="step-upload">
+                <h2>Upload Photo</h2>
+                <div class="upload-area" id="upload-area-box" onclick="document.getElementById('imageInput').click()">
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                    <!-- Normal upload UI -->
+                    <div id="upload-ui">
+                        <div class="upload-buttons-row">
+                            <button onclick="event.stopPropagation(); document.getElementById('imageInput').click()" class="btn btn-primary">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                                Choose Image
+                            </button>
+                        </div>
+                        <p class="hint">Upload a photo of your current hair</p>
+                        <p class="hint" style="margin-top: 2px; font-size: 0.75rem;">Supported formats: PNG, JPG, JPEG, WEBP (Max 16MB)</p>
+                    </div>
+                    <!-- Processing spinner -->
+                    <div id="upload-processing">
+                        <div class="upload-spinner-ring">
+                            <span class="upload-spinner-icon">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M12 2C8 2 4.5 5 4.5 9c0 3.5 2.5 6.5 5.5 7.5V20h4v-3.5c3-1 5.5-4 5.5-7.5C19.5 5 16 2 12 2z"/>
+                                    <line x1="9" y1="20" x2="15" y2="20"/>
+                                    <line x1="10" y1="22" x2="14" y2="22"/>
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="upload-spinner-label" id="upload-spinner-label">Removing background…</div>
+                        <div class="upload-spinner-sub">Preparing your photo for analysis</div>
+                        <div class="upload-progress-bar"></div>
+                    </div>
+                </div>
+                <div id="imagePreview" style="display: none;">
+                    <img id="uploadedImage" alt="Uploaded image">
+                    <br><br>
+                    <button onclick="continueToOptions()" class="btn btn-success">
+                        Continue to Options
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                            <polyline points="12 5 19 12 12 19"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Select Options -->
+            <div class="step" id="step-options" style="display: none;">
+
+                <!-- Sticky header: heading + both reference images freeze together -->
+                <div class="step-options-header">
+                    <h2>Select Treatment Areas</h2>
+
+                    <!-- Patient Photo + Scalp Zone Reference side by side -->
+                    <div class="photo-reference-container">
+                        <div style="flex: 1; min-width: 200px; max-width: 300px; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                            <img id="optionsPatientPhoto" alt="Patient Photo" class="patient-photo-img">
+                            <p class="reference-note" style="margin-top: 8px;">Your uploaded photo</p>
+                        </div>
+                        <div style="flex: 1; min-width: 200px; max-width: 300px; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                            <img src="{{ url_for('static', filename='images/scalp_zones.png') }}" alt="Scalp Zone Reference" class="zone-ref-img">
+                            <p class="reference-note" style="margin-top: 8px;">Reference: Scalp zone diagram</p>
+                        </div>
+                    </div>
+                </div><!-- /.step-options-header -->
+
+                <p class="options-hint">Choose the areas you want to enhance and select your preferred density level for each.</p>
+
+                <div class="area-options-container">
+                    <!-- Area 1 -->
+                    <div class="area-option-card">
+                        <div class="area-header">
+                            <label class="area-checkbox">
+                                <input type="checkbox" name="area" value="area1" id="area-area1">
+                                <strong>Area 1 - Temporal Peaks</strong>
+                            </label>
+                            <span class="area-description">Frontal hairline edge</span>
+                        </div>
+                        <div class="density-options" id="density-area1">
+                            <label class="density-option"><input type="radio" name="density-area1" value="full" data-grafts="750"><span class="density-label">Full</span><span class="density-fu">40-45 FU/cm²</span><span class="graft-count">~ 750 Grafts</span></label>
+                            <label class="density-option"><input type="radio" name="density-area1" value="moderate" data-grafts="500" checked><span class="density-label">Moderate</span><span class="density-fu">30-35 FU/cm²</span><span class="graft-count">~ 500 Grafts</span></label>
+                        </div>
+                    </div>
+                    <!-- Area 2 -->
+                    <div class="area-option-card">
+                        <div class="area-header">
+                            <label class="area-checkbox">
+                                <input type="checkbox" name="area" value="area2" id="area-area2">
+                                <strong>Area 2 - Frontal Hairline Zone</strong>
+                            </label>
+                            <span class="area-description">Natural Frontal hairline</span>
+                        </div>
+                        <div class="density-options" id="density-area2">
+                            <label class="density-option"><input type="radio" name="density-area2" value="full" data-grafts="1000"><span class="density-label">Full</span><span class="density-fu">40-45 FU/cm²</span><span class="graft-count">~ 1250 Grafts</span></label>
+                            <label class="density-option"><input type="radio" name="density-area2" value="moderate" data-grafts="750" checked><span class="density-label">Moderate</span><span class="density-fu">30-35 FU/cm²</span><span class="graft-count">~ 1000 Grafts</span></label>
+                        </div>
+                    </div>
+                    <!-- Area 3 -->
+                    <div class="area-option-card">
+                        <div class="area-header">
+                            <label class="area-checkbox">
+                                <input type="checkbox" name="area" value="area3" id="area-area3">
+                                <strong>Area 3 - Frontal Forelock</strong>
+                            </label>
+                            <span class="area-description">Transition zone behind the hairline</span>
+                        </div>
+                        <div class="density-options" id="density-area3">
+                            <label class="density-option"><input type="radio" name="density-area3" value="full" data-grafts="1400"><span class="density-label">Full</span><span class="density-fu">40-45 FU/cm²</span><span class="graft-count">~ 1600 Grafts</span></label>
+                            <label class="density-option"><input type="radio" name="density-area3" value="moderate" data-grafts="1000" checked><span class="density-label">Moderate</span><span class="density-fu">30-35 FU/cm²</span><span class="graft-count">~ 1250 Grafts</span></label>
+                            <label class="density-option camouflage"><input type="radio" name="density-area3" value="camouflage" data-grafts="800"><span class="density-label">Camouflage</span><span class="density-fu">20 FU/cm²</span><span class="graft-count">~ 900 Grafts</span></label>
+                        </div>
+                    </div>
+                    <!-- Area 4 -->
+                    <div class="area-option-card">
+                        <div class="area-header">
+                            <label class="area-checkbox">
+                                <input type="checkbox" name="area" value="area4" id="area-area4">
+                                <strong>Area 4 - Mid-Scalp Bridge</strong>
+                            </label>
+                            <span class="area-description">Between area 3 and anterior crown ring</span>
+                        </div>
+                        <div class="density-options" id="density-area4">
+                            <label class="density-option"><input type="radio" name="density-area4" value="full" data-grafts="1200"><span class="density-label">Full</span><span class="density-fu">40-45 FU/cm²</span><span class="graft-count">~ 1200 Grafts</span></label>
+                            <label class="density-option"><input type="radio" name="density-area4" value="moderate" data-grafts="900" checked><span class="density-label">Moderate</span><span class="density-fu">30-35 FU/cm²</span><span class="graft-count">~ 900 Grafts</span></label>
+                            <label class="density-option camouflage"><input type="radio" name="density-area4" value="camouflage" data-grafts="600"><span class="density-label">Camouflage</span><span class="density-fu">20 FU/cm²</span><span class="graft-count">~ 600 Grafts</span></label>
+                        </div>
+                    </div>
+                    <!-- Area 5A -->
+                    <div class="area-option-card">
+                        <div class="area-header">
+                            <label class="area-checkbox">
+                                <input type="checkbox" name="area" value="area5a" id="area-area5a">
+                                <strong>Area 5A - Anterior Crown Ring</strong>
+                            </label>
+                            <span class="area-description">In front of crown, touching lateral horns</span>
+                        </div>
+                        <div class="density-options" id="density-area5a">
+                            <label class="density-option"><input type="radio" name="density-area5a" value="full" data-grafts="750"><span class="density-label">Full</span><span class="density-fu">40-45 FU/cm²</span><span class="graft-count">~ 750 Grafts</span></label>
+                            <label class="density-option"><input type="radio" name="density-area5a" value="moderate" data-grafts="500" checked><span class="density-label">Moderate</span><span class="density-fu">30-35 FU/cm²</span><span class="graft-count">~ 500 Grafts</span></label>
+                            <label class="density-option camouflage"><input type="radio" name="density-area5a" value="camouflage" data-grafts="350"><span class="density-label">Camouflage</span><span class="density-fu">20 FU/cm²</span><span class="graft-count">~ 350 Grafts</span></label>
+                        </div>
+                    </div>
+                    <!-- Area 5B -->
+                    <div class="area-option-card">
+                        <div class="area-header">
+                            <label class="area-checkbox">
+                                <input type="checkbox" name="area" value="area5b" id="area-area5b">
+                                <strong>Area 5B - Post Crown Ring</strong>
+                            </label>
+                            <span class="area-description">Behind crown, touching lateral horns</span>
+                        </div>
+                        <div class="density-options" id="density-area5b">
+                            <label class="density-option"><input type="radio" name="density-area5b" value="full" data-grafts="750"><span class="density-label">Full</span><span class="density-fu">40-45 FU/cm²</span><span class="graft-count">~ 750 Grafts</span></label>
+                            <label class="density-option"><input type="radio" name="density-area5b" value="moderate" data-grafts="500" checked><span class="density-label">Moderate</span><span class="density-fu">30-35 FU/cm²</span><span class="graft-count">~ 500 Grafts</span></label>
+                            <label class="density-option camouflage"><input type="radio" name="density-area5b" value="camouflage" data-grafts="350"><span class="density-label">Camouflage</span><span class="density-fu">20 FU/cm²</span><span class="graft-count">~ 350 Grafts</span></label>
+                        </div>
+                    </div>
+                    <!-- Area 6A -->
+                    <div class="area-option-card">
+                        <div class="area-header">
+                            <label class="area-checkbox">
+                                <input type="checkbox" name="area" value="area6a" id="area-area6a">
+                                <strong>Area 6A - Front Crown</strong>
+                            </label>
+                            <span class="area-description">Front half of the crown</span>
+                        </div>
+                        <div class="density-options" id="density-area6a">
+                            <label class="density-option"><input type="radio" name="density-area6a" value="full" data-grafts="600"><span class="density-label">Full</span><span class="density-fu">40-45 FU/cm²</span><span class="graft-count">~ 600 Grafts</span></label>
+                            <label class="density-option"><input type="radio" name="density-area6a" value="moderate" data-grafts="450" checked><span class="density-label">Moderate</span><span class="density-fu">30-35 FU/cm²</span><span class="graft-count">~ 450 Grafts</span></label>
+                            <label class="density-option camouflage"><input type="radio" name="density-area6a" value="camouflage" data-grafts="300"><span class="density-label">Camouflage</span><span class="density-fu">20 FU/cm²</span><span class="graft-count">~ 300 Grafts</span></label>
+                        </div>
+                    </div>
+                    <!-- Area 6B -->
+                    <div class="area-option-card">
+                        <div class="area-header">
+                            <label class="area-checkbox">
+                                <input type="checkbox" name="area" value="area6b" id="area-area6b">
+                                <strong>Area 6B - Back Crown</strong>
+                            </label>
+                            <span class="area-description">Back half of the crown</span>
+                        </div>
+                        <div class="density-options" id="density-area6b">
+                            <label class="density-option"><input type="radio" name="density-area6b" value="full" data-grafts="600"><span class="density-label">Full</span><span class="density-fu">40-45 FU/cm²</span><span class="graft-count">~ 600 Grafts</span></label>
+                            <label class="density-option"><input type="radio" name="density-area6b" value="moderate" data-grafts="450" checked><span class="density-label">Moderate</span><span class="density-fu">30-35 FU/cm²</span><span class="graft-count">~ 450 Grafts</span></label>
+                            <label class="density-option camouflage"><input type="radio" name="density-area6b" value="camouflage" data-grafts="300"><span class="density-label">Camouflage</span><span class="density-fu">20 FU/cm²</span><span class="graft-count">~ 300 Grafts</span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Graft Summary -->
+                <div class="graft-summary" id="graft-summary">
+                    <h3>Estimated Graft Summary</h3>
+                    <div class="summary-details" id="summary-details">
+                        <p class="no-selection">Please select at least one area to see the estimate</p>
+                    </div>
+                    <div class="total-grafts" id="total-grafts" style="display: none;">
+                        <span>Total Estimated Grafts:</span>
+                        <strong><span id="total-graft-count">0</span></strong>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button onclick="backToUpload()" class="btn btn-secondary">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="19" y1="12" x2="5" y2="12"/>
+                            <polyline points="12 19 5 12 12 5"/>
+                        </svg>
+                        Back
+                    </button>
+                    <button onclick="generateHair()" class="btn btn-primary" id="generate-btn">
+                        Generate Preview
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Results -->
+            <div class="step" id="step-results" style="display: none;">
+                <h2>Transformation Preview</h2>
+                <div id="loadingIndicator" class="loading">
+                    <div class="spinner"></div>
+                    <div class="gen-spinner-wrap">
+                        <div class="gen-rings">
+                            <div class="gen-ring gen-ring-1"></div>
+                            <div class="gen-ring gen-ring-2"></div>
+                            <div class="gen-ring gen-ring-3"></div>
+                            <div class="gen-ring-core"></div>
+                        </div>
+                        <div class="gen-status-wrap">
+                            <div class="gen-status-msg visible" id="gen-msg">Analysing hair pattern…</div>
+                        </div>
+                        <div class="gen-status-sub" id="gen-sub">This may take 1–2 minutes</div>
+                        <div class="gen-progress-bar"></div>
+                        <div class="gen-dots">
+                            <div class="gen-dot"></div>
+                            <div class="gen-dot"></div>
+                            <div class="gen-dot"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="resultsContainer" style="display: none;">
+                    <div class="results-grid">
+                        <div class="result-item">
+                            <h3 class="before-title">Before</h3>
+                            <img id="beforeImage" alt="Before">
+                        </div>
+                        <div class="result-item">
+                            <h3 class="after-title">After</h3>
+                            <img id="afterImage" alt="After">
+                        </div>
+                    </div>
+
+                    <!-- Results Summary -->
+                    <div class="results-summary" id="results-summary">
+                        <h3>Treatment Summary</h3>
+                        <div id="results-details"></div>
+
+                        <!-- Disclaimer -->
+                        <div class="disclaimer">
+                            <strong>Important Disclaimer</strong>
+                            This visualization is a rough estimate generated by AI for illustrative purposes only.
+                            It does not guarantee actual surgical results. Individual outcomes vary based on factors
+                            including hair characteristics, donor area quality, and surgical technique.
+                            Please consult with a qualified hair restoration specialist for accurate assessment.
+                        </div>
+                    </div>
+
+                    <!-- Download Section -->
+                    <div class="download-section">
+                        <h3>Download Your Results</h3>
+                        <div class="download-buttons">
+                            <button onclick="downloadImage('before')" class="btn btn-outline btn-small">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Before Image
+                            </button>
+                            <button onclick="downloadImage('after')" class="btn btn-outline btn-small">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                After Image
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Share Results Section -->
+                    <div class="share-results-section" id="share-results-section">
+                        <div class="share-results-inner">
+                            <div class="share-results-text">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                                </svg>
+                                <div>
+                                    <h4>Share Your Results</h4>
+                                    <p>Create a shareable link to your before &amp; after comparison</p>
+                                </div>
+                            </div>
+                            <button onclick="demoShareResults()" class="btn btn-share" id="share-before-after-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                                </svg>
+                                Generate Share Link
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Subscribe CTA -->
+                    <div style="background: linear-gradient(135deg, rgba(108,92,231,0.1), rgba(168,85,247,0.08)); border: 1px solid rgba(168,85,247,0.25); border-radius: 16px; padding: 28px; text-align: center; margin-top: 24px;">
+                        <h3 style="font-size: 18px; font-weight: 700; color: #e2e8f0; margin-bottom: 8px;">Want Unlimited Simulations?</h3>
+                        <p style="font-size: 14px; color: #94a3b8; margin-bottom: 16px;">Subscribe to FlowGeniQ for unlimited AI hair restoration simulations, 360° turntable views, PDF reports, and more.</p>
+                        <a href="https://suite.flowmediq.io" target="_blank" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; text-decoration: none; font-size: 15px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            Subscribe Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Powered by FlowGeniQ — FlowMediQ AI</p>
+        </footer>
+    </div>
+
+    <script>
+        // ============================================
+        // Demo App JS — Reuses main app endpoints
+        // ============================================
+        var uploadedFilename = null;
+        var beforeImageUrl = null;
+        var afterImageUrl = null;
+        var currentSelections = [];
+        var demoUsed = false;
+
+        const graftCounts = {
+            area1: { full: 750, moderate: 600 },
+            area2: { full: 1250, moderate: 1000 },
+            area3: { full: 1600, moderate: 1250, camouflage: 900 },
+            area4: { full: 1200, moderate: 900, camouflage: 600 },
+            area5a: { full: 750, moderate: 500, camouflage: 350 },
+            area5b: { full: 750, moderate: 500, camouflage: 350 },
+            area6a: { full: 600, moderate: 450, camouflage: 300 },
+            area6b: { full: 600, moderate: 450, camouflage: 300 }
+        };
+
+        const areaNames = {
+            area1: 'Area 1 - Temporal Peaks',
+            area2: 'Area 2 - Frontal Hairline Band',
+            area3: 'Area 3 - Frontal Forelock',
+            area4: 'Area 4 - Mid-Scalp Bridge Zone',
+            area5a: 'Area 5A - Anterior Crown Ring',
+            area5b: 'Area 5B - Post-Crown Ring',
+            area6a: 'Area 6A - Front Crown',
+            area6b: 'Area 6B - Back Crown'
+        };
+
+        const densityInfo = {
+            full: { name: 'Full', fu: '40-45 FU/cm²' },
+            moderate: { name: 'Moderate', fu: '30-35 FU/cm²' },
+            camouflage: { name: 'Camouflage', fu: '20 FU/cm²' }
+        };
+
+        // ── Upload spinner helpers ───────────────────────────────────────────────
+        const UPLOAD_MSGS = ['Removing background…','Isolating hair regions…','Preparing photo for analysis…'];
+        let _uploadMsgTimer = null;
+        function showUploadSpinner() {
+            const areaBox  = document.getElementById('upload-area-box');
+            const uploadUI = document.getElementById('upload-ui');
+            const proc     = document.getElementById('upload-processing');
+            const lbl      = document.getElementById('upload-spinner-label');
+            if (!proc) return;
+            if (areaBox)  areaBox.style.pointerEvents = 'none';
+            if (uploadUI) uploadUI.style.display = 'none';
+            proc.classList.add('active');
+            let idx = 0;
+            if (lbl) lbl.textContent = UPLOAD_MSGS[0];
+            _uploadMsgTimer = setInterval(() => {
+                idx = (idx + 1) % UPLOAD_MSGS.length;
+                if (lbl) { lbl.style.opacity = '0'; setTimeout(() => { lbl.textContent = UPLOAD_MSGS[idx]; lbl.style.opacity = '1'; }, 220); }
+            }, 1800);
+        }
+        function hideUploadSpinner() {
+            const areaBox  = document.getElementById('upload-area-box');
+            const uploadUI = document.getElementById('upload-ui');
+            const proc     = document.getElementById('upload-processing');
+            if (!proc) return;
+            clearInterval(_uploadMsgTimer);
+            proc.classList.remove('active');
+            if (uploadUI) uploadUI.style.display = '';
+            if (areaBox)  areaBox.style.pointerEvents = '';
+        }
+
+        // ── Generation spinner cycling ──────────────────────────────────────────
+        const GEN_MSGS = [
+            { main: 'Analysing hair pattern…',     sub: 'Mapping follicle density and zones' },
+            { main: 'Applying restoration model…', sub: 'AI is placing virtual grafts' },
+            { main: 'Rendering transformation…',   sub: 'Blending with your natural hair' },
+            { main: 'Refining final details…',     sub: 'Almost there — polishing the result' },
+            { main: 'Creating your preview…',      sub: 'Finalising the before & after image' }
+        ];
+        let _genMsgTimer = null;
+        function startGenSpinner() {
+            const msgEl = document.getElementById('gen-msg');
+            const subEl = document.getElementById('gen-sub');
+            if (!msgEl) return;
+            let idx = 0;
+            msgEl.textContent = GEN_MSGS[0].main;
+            if (subEl) subEl.textContent = GEN_MSGS[0].sub;
+            _genMsgTimer = setInterval(() => {
+                idx = (idx + 1) % GEN_MSGS.length;
+                msgEl.classList.remove('visible');
+                setTimeout(() => { msgEl.textContent = GEN_MSGS[idx].main; if (subEl) subEl.textContent = GEN_MSGS[idx].sub; msgEl.classList.add('visible'); }, 300);
+            }, 3500);
+        }
+        function stopGenSpinner() { clearInterval(_genMsgTimer); }
+
+        // Handle image upload
+        document.getElementById('imageInput').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            showUploadSpinner();
+            const formData = new FormData();
+            formData.append('image', file);
+            try {
+                const response = await fetch('/demo/t/{{ slug }}/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                hideUploadSpinner();
+                if (data.success) {
+                    uploadedFilename = data.filename;
+                    beforeImageUrl = data.url;
+                    document.getElementById('uploadedImage').src = data.url;
+                    document.getElementById('imagePreview').style.display = 'block';
+                } else {
+                    showNotification('Upload failed: ' + data.error, 'error');
+                }
+            } catch (error) {
+                hideUploadSpinner();
+                showNotification('Upload error: ' + error.message, 'error');
+            }
+        });
+
+        // Initialize event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('input[name="area"]').forEach(cb => {
+                cb.addEventListener('change', updateGraftSummary);
+            });
+            document.querySelectorAll('input[type="radio"][name^="density-"]').forEach(radio => {
+                radio.addEventListener('change', updateGraftSummary);
+            });
+            updateGraftSummary();
+        });
+
+        function updateGraftSummary() {
+            const selectedAreas = getSelectedAreasWithDensity();
+            const summaryDetails = document.getElementById('summary-details');
+            const totalGraftsDiv = document.getElementById('total-grafts');
+            const totalGraftCount = document.getElementById('total-graft-count');
+
+            if (selectedAreas.length === 0) {
+                summaryDetails.innerHTML = '<p class="no-selection">Please select at least one area to see the estimate</p>';
+                totalGraftsDiv.style.display = 'none';
+                return;
+            }
+
+            let total = 0;
+            let detailsHtml = '<ul class="summary-list">';
+            selectedAreas.forEach(item => {
+                const grafts = graftCounts[item.area][item.density];
+                total += grafts;
+                detailsHtml += `<li><span><strong>${areaNames[item.area]}</strong> <span style="color: #888;">(${densityInfo[item.density].name} - ${densityInfo[item.density].fu})</span></span><span style="color: #e94560; font-weight: 600;">${grafts} Grafts</span></li>`;
+            });
+            detailsHtml += '</ul>';
+            summaryDetails.innerHTML = detailsHtml;
+            totalGraftCount.textContent = total;
+            totalGraftsDiv.style.display = 'flex';
+        }
+
+        function getSelectedAreasWithDensity() {
+            const selectedAreas = [];
+            document.querySelectorAll('input[name="area"]:checked').forEach(checkbox => {
+                const area = checkbox.value;
+                const densityRadio = document.querySelector(`input[name="density-${area}"]:checked`);
+                selectedAreas.push({ area: area, density: densityRadio ? densityRadio.value : 'moderate' });
+            });
+            return selectedAreas;
+        }
+
+        function continueToOptions() {
+            const uploadedImg = document.getElementById('uploadedImage');
+            const optionsPhoto = document.getElementById('optionsPatientPhoto');
+            if (uploadedImg && optionsPhoto) optionsPhoto.src = uploadedImg.src;
+            document.getElementById('step-upload').style.display = 'none';
+            document.getElementById('step-options').style.display = 'block';
+            updateGraftSummary();
+        }
+
+        function backToUpload() {
+            document.getElementById('step-options').style.display = 'none';
+            document.getElementById('step-upload').style.display = 'block';
+        }
+
+        async function generateHair() {
+            if (demoUsed) {
+                showNotification('Your free demo has been used. Subscribe for unlimited access.', 'warning');
+                return;
+            }
+            if (!uploadedFilename) {
+                showNotification('Please upload an image first', 'warning');
+                return;
+            }
+            const selectedAreas = getSelectedAreasWithDensity();
+            if (selectedAreas.length === 0) {
+                showNotification('Please select at least one area', 'warning');
+                return;
+            }
+
+            currentSelections = selectedAreas;
+
+            document.getElementById('step-options').style.display = 'none';
+            document.getElementById('step-results').style.display = 'block';
+            document.getElementById('loadingIndicator').style.display = 'block';
+            document.getElementById('resultsContainer').style.display = 'none';
+            startGenSpinner();
+
+            try {
+                const response = await fetch('/demo/t/{{ slug }}/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: uploadedFilename, areaSelections: selectedAreas })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    afterImageUrl = data.resultUrl;
+                    document.getElementById('beforeImage').src = data.originalUrl;
+                    document.getElementById('afterImage').src = data.resultUrl;
+                    displayResultsSummary(selectedAreas);
+                    stopGenSpinner();
+                    document.getElementById('loadingIndicator').style.display = 'none';
+                    document.getElementById('resultsContainer').style.display = 'block';
+
+                    // Mark demo as used (already done server-side in /generate)
+                    demoUsed = true;
+                } else {
+                    showNotification('Generation failed: ' + data.error, 'error');
+                    stopGenSpinner();
+                    document.getElementById('loadingIndicator').style.display = 'none';
+                }
+            } catch (error) {
+                showNotification('Generation error: ' + error.message, 'error');
+                stopGenSpinner();
+                document.getElementById('loadingIndicator').style.display = 'none';
+            }
+        }
+
+        // markDemoUsed is no longer needed — generation endpoint marks lead as used server-side
+
+        function displayResultsSummary(selectedAreas) {
+            const resultsDetails = document.getElementById('results-details');
+            let total = 0;
+            let html = '<ul class="results-list">';
+            selectedAreas.forEach(item => {
+                const grafts = graftCounts[item.area][item.density];
+                total += grafts;
+                html += `<li><span><strong>${areaNames[item.area]}</strong> <span style="color: #888;">(${densityInfo[item.density].name} - ${densityInfo[item.density].fu})</span></span><span style="color: #e94560; font-weight: 600;">${grafts} Grafts</span></li>`;
+            });
+            html += '</ul>';
+            html += `<div class="results-total"><strong>Total Estimated Grafts: ${total}</strong></div>`;
+            resultsDetails.innerHTML = html;
+        }
+
+        function downloadImage(type) {
+            const url = type === 'before' ? beforeImageUrl : afterImageUrl;
+            if (!url) return;
+            const filename = url.split('/').pop();
+            const a = document.createElement('a');
+            a.href = `/download/${filename}`;
+            a.download = `${type}_image_${filename}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        async function demoShareResults() {
+            if (!beforeImageUrl || !afterImageUrl) {
+                showNotification('No results to share yet', 'warning');
+                return;
+            }
+
+            const btn = document.getElementById('share-before-after-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin-icon"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Creating link...';
+
+            try {
+                let graftSummary = null;
+                if (currentSelections.length > 0) {
+                    let total = 0;
+                    const areas = currentSelections.map(item => {
+                        const grafts = graftCounts[item.area][item.density];
+                        total += grafts;
+                        return { area: areaNames[item.area], density: densityInfo[item.density].name, fuPerCm2: densityInfo[item.density].fu, grafts: grafts };
+                    });
+                    graftSummary = { areas: areas, total: total };
+                }
+
+                const response = await fetch('/demo/t/{{ slug }}/create-share', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ beforeImage: beforeImageUrl, afterImage: afterImageUrl, graftSummary: graftSummary })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    // Share created successfully
+
+                    // Show share link
+                    btn.outerHTML = `
+                        <div style="display:flex;flex-direction:column;gap:10px;width:100%;">
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <input type="text" value="${data.shareUrl}" readonly style="flex:1;padding:10px 14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;font-size:13px;font-family:inherit;" id="demo-share-url">
+                                <button onclick="copyDemoShareUrl()" class="btn btn-primary btn-small" style="white-space:nowrap;">Copy</button>
+                            </div>
+                            <div style="font-size:12px;color:#94a3b8;text-align:center;">Share this link with anyone to show your results</div>
+                        </div>
+                    `;
+                } else {
+                    showNotification('Failed to create share link: ' + (data.error || 'Unknown error'), 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Generate Share Link';
+                }
+            } catch (error) {
+                showNotification('Error creating share link: ' + error.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Generate Share Link';
+            }
+        }
+
+        function copyDemoShareUrl() {
+            const input = document.getElementById('demo-share-url');
+            input.select();
+            navigator.clipboard.writeText(input.value).then(() => {
+                showNotification('Link copied to clipboard!', 'success');
+            }).catch(() => {
+                document.execCommand('copy');
+                showNotification('Link copied!', 'info');
+            });
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `<span>${message}</span><button onclick="this.parentElement.remove()">&times;</button>`;
+            document.body.appendChild(notification);
+            setTimeout(() => { if (notification.parentElement) notification.remove(); }, 5000);
+        }
+
+        function loadImage(src) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = src;
+            });
+        }
+    </script>
+</body>
+</html>

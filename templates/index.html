@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hair Studio 360</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% if request.args.get('studio360') == '1' %}<style>.user-bar,header,footer,.voice-widget{display:none!important}body{padding-top:0!important}.container{padding-top:0!important}</style>{% endif %}
+</head>
+<body>
+    <!-- User Info Bar -->
+    <div class="user-bar">
+        <div class="user-info">
+            <div class="user-avatar">{{ user.username[0]|upper if user.username else user.email[0]|upper if user.email else 'U' }}</div>
+            <span class="user-name">{{ user.username or user.email }}</span>
+        </div>
+        <div class="user-stats">
+            {% if not embed_mode %}
+            <span class="usage-info" id="usage-display">
+                Credits: 
+                {% if usage %}
+                    {% if usage.unlimited %}
+                        Unlimited
+                    {% else %}
+                        {{ usage.pool_remaining }} remaining
+                    {% endif %}
+                {% else %}
+                    Loading...
+                {% endif %}
+            </span>
+            <button onclick="openManageShares()" class="manage-shares-btn" title="Manage Shared Links">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="18" cy="5" r="3"/>
+                    <circle cx="6" cy="12" r="3"/>
+                    <circle cx="18" cy="19" r="3"/>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                </svg>
+                My Shares
+            </button>
+            <button onclick="openDemoLinks()" class="manage-shares-btn" title="Demo Links" style="background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(139,92,246,0.1));border-color:rgba(168,85,247,0.3);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                </svg>
+                Demo Links
+            </button>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if not can_generate %}
+    <div class="limit-warning">
+        <strong>⚠️ Usage Limit Reached:</strong> You have used all your available generations. Please upgrade your plan to continue using the service.
+    </div>
+    {% endif %}
+    
+    <div class="container">
+        <header>
+            <div style="display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;">
+                <img src="{{ url_for('static', filename='images/flowmediq-logo.png') }}" alt="Hair Studio 360" style="width:56px;height:56px;border-radius:12px;object-fit:contain;display:block;">
+                <h1 style="margin:0;">Hair Studio 360</h1>
+            </div>
+            <p>Hair transplant simulation</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Step 1: Upload Image -->
+            <div class="step" id="step-upload">
+                <h2>Upload Photo</h2>
+                <div class="upload-area" id="upload-area-box" onclick="document.getElementById('imageInput').click()">
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                    <!-- Normal upload UI -->
+                    <div id="upload-ui">
+                        <div class="upload-buttons-row">
+                            <button onclick="event.stopPropagation(); document.getElementById('imageInput').click()" class="btn btn-primary">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                                Choose Image
+                            </button>
+                            <span class="upload-or-divider">or</span>
+                            <button onclick="event.stopPropagation(); window.FUEsionVoice.openCamera()" class="btn btn-camera">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                    <circle cx="12" cy="13" r="4"/>
+                                </svg>
+                                Use Camera
+                            </button>
+                        </div>
+                        <p class="hint">Upload an image or take a photo with your camera</p>
+                        <p class="hint" style="margin-top: 2px; font-size: 0.75rem;">Supported formats: PNG, JPG, JPEG, WEBP (Max 16MB)</p>
+                    </div>
+                    <!-- Processing spinner (shown while background is removed) -->
+                    <div id="upload-processing">
+                        <div class="upload-spinner-ring">
+                            <span class="upload-spinner-icon">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M12 2C8 2 4.5 5 4.5 9c0 3.5 2.5 6.5 5.5 7.5V20h4v-3.5c3-1 5.5-4 5.5-7.5C19.5 5 16 2 12 2z"/>
+                                    <line x1="9" y1="20" x2="15" y2="20"/>
+                                    <line x1="10" y1="22" x2="14" y2="22"/>
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="upload-spinner-label" id="upload-spinner-label">Removing background…</div>
+                        <div class="upload-spinner-sub">Preparing your photo for analysis</div>
+                        <div class="upload-progress-bar"></div>
+                    </div>
+                </div>
+                <div id="imagePreview" style="display: none;">
+                    <img id="uploadedImage" alt="Uploaded image">
+                    <br><br>
+                    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                        <button onclick="rotateUploadedImage()" id="rotateImageBtn" class="btn btn-secondary" title="Rotate the photo 90° clockwise">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 4 23 10 17 10"/>
+                                <path d="M20.49 9A9 9 0 1 0 22 12"/>
+                            </svg>
+                            Rotate
+                        </button>
+                        <button onclick="continueToOptions()" class="btn btn-success">
+                            Continue to Options
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                                <polyline points="12 5 19 12 12 19"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Select Options -->
+            <div class="step" id="step-options" style="display: none;">
+
+                <!-- Sticky header: heading + both reference images freeze together -->
+                <div class="step-options-header">
+                    <h2>Select Treatment Areas</h2>
+
+                    <!-- Patient Photo + Scalp Zone Reference side by side -->
+                    <div class="photo-reference-container">
+                        <!-- Uploaded Patient Photo -->
+                        <div style="flex: 1; min-width: 200px; max-width: 300px; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                            <img id="optionsPatientPhoto" alt="Patient Photo" class="patient-photo-img">
+                            <p class="reference-note" style="margin-top: 8px;">Your uploaded photo</p>
+                        </div>
+                        <!-- Scalp Zone Reference Image -->
+                        <div style="flex: 1; min-width: 200px; max-width: 300px; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                            <img src="{{ url_for('static', filename='images/scalp_zones.png') }}" alt="Scalp Zone Reference" class="zone-ref-img">
+                            <p class="reference-note" style="margin-top: 8px;">Reference: Scalp zone diagram</p>
+                        </div>
+                    </div>
+                </div><!-- /.step-options-header -->
+                
+                <p class="options-hint">Choose the areas you want to enhance and select your preferred density level for each.</p>
+                
+                <div class="area-options-container">
+                    <!-- Area 1 - Hairline -->
+                    <div class="area-option-card">
+                        <div class="area-header">
+                            <label class="area-checkbox">
+                                <input type="checkbox" name="area" value="area1" id="area-area1">
+                                <strong>Area 1 - Temporal Peaks</strong>
+                            </label>
+                            <span class="area-description">Frontal hairline edge</span>
+                        </div>
+                        <div class="density-options" id="density-area1">
+                            <label class="density-option">
+                                <input type="radio" name="density-area1" value="full" data-grafts="750">
+                                <span class="density-label">Full</span>
+                                <span class="density-fu">40-45 FU/cm²</span>
+                                <span class="graft-count">∼ 750 Grafts</span>
+                            </label>
+                            <label class="density-option">
+                                <input type="radio" name="density-area1" value="moderate" data-grafts="500" checked>
+                                <span class="density-label">Moderate</span>
+                                <span class="density-fu">30-35 FU/cm²</span>
+                                <span class="graft-count">∼ 500 Grafts</span>
+                            </label>
+                        </div>
+                    </div> 
+
+                    <!-- Area 2 - Frontal Zone -->
+                    <div class="area-option-card">
+                        <div class="area-header">
+                            <label class="area-checkbox">
+                                <input type="checkbox" name="area" value="area2" id="area-area2">
+                                <strong>Area 2 - Frontal Hairline Zone</strong>
+                            </label>
+                            <span class="area-description">Natural Frontal hairline</span>
+                        </div>
+                        <div class="density-options" id="density-area2">
+                            <label class="density-option">
+                                <input type="radio" name="density-area2" value="full" data-grafts="1000">
+                                <span class="density-label">Full</span>
+                                <span class="density-fu">40-45 FU/cm²</span>
+                                <span class="graft-count">∼ 1250 Grafts</span>
+                            </label>
+                            <label class="density-option">
+                                <input type="radio" name="density-area2" value="moderate" data-grafts="750" checked>
+                                <span class="density-label">Moderate</span>
+                                <span class="density-fu">30-35 FU/cm²</span>
+                                <span class="graft-count">∼ 1000 Grafts</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Area 3 - Mid-Scalp/Top -->
+                    <div class="area-option-card">
+                        <div class="area-header">
+                            <label class="area-checkbox">
+                                <input type="checkbox" name="area" value="area3" id="area-area3">
+                                <strong>Area 3 - Frontal Forelock</strong>
+                            </label>
+                            <span class="area-description">Transition zone behind the hairline</span>
+                        </div>
+                        <div class="density-options" id="density-area3">
+                            <label class="density-option">
+                                <input type="radio" name="density-area3" value="full" data-grafts="1400">
+                                <span class="density-label">Full</span>
+                                <span class="density-fu">40-45 FU/cm²</span>
+                                <span class="graft-count">∼ 1600 Grafts</span>
+                            </label>
+                            <label class="density-option">
+                                <input type="radio" name="density-area3" value="moderate" data-grafts="1000" checked>
+                                <span class="density-label">Moderate</span>
+                                <span class="density-fu">30-35 FU/cm²</span>
+                                <span class="graft-count">∼ 1250 Grafts</span>
+                            </label>
+                            <label class="density-option camouflage">
+                                <input type="radio" name="density-area3" value="camouflage" data-grafts="800">
+                                <span class="density-label">Camouflage</span>
+                                <span class="density-fu">20 FU/cm²</span>
+                                <span class="graft-count">∼ 900 Grafts</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Area 4 - Transition Zone -->
+                    <div class="area-option-card">
+                        <div class="area-header">
+                            <label class="area-checkbox">
+                                <input type="checkbox" name="area" value="area4" id="area-area4">
+                                <strong>Area 4 - Mid-Scalp Bridge</strong>
+                            </label>
+                            <span class="area-description">Between area 3 and anterior crown ring</span>
+                        </div>
+                        <div class="density-options" id="density-area4">
+                            <label class="density-option">
+                                <input type="radio" name="density-area4" value="full" data-grafts="1200">
+                                <span class="density-label">Full</span>
+                                <span class="density-fu">40-45 FU/cm²</span>
+                                <span class="graft-count">∼ 1200 Grafts</span>
+                            </label>
+                            <label class="density-option">
+                                <input type="radio" name="density-area4" value="moderate" data-grafts="900" checked>
+                                <span class="density-label">Moderate</span>
+                                <span class="density-fu">30-35 FU/cm²</span>
+                                <span class="graft-count">∼ 900 Grafts</span>
+                            </label>
+                            <label class="density-option camouflage">
+                                <input type="radio" name="density-area4" value="camouflage" data-grafts="600">
+                                <span class="density-label">Camouflage</span>
+                                <span class="density-fu">20 FU/cm²</span>
+                                <span class="graft-count">∼ 600 Grafts</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Area 5A - Pre-Crown -->
+                    <div class="area-option-card">
+                        <div class="area-header">
+                            <label class="area-checkbox">
+                                <input type="checkbox" name="area" value="area5a" id="area-area5a">
+                                <strong>Area 5A - Anterior Crown Ring</strong>
+                            </label>
+                            <span class="area-description">In front of crown, touching lateral horns</span>
+                        </div>
+                        <div class="density-options" id="density-area5a">
+                            <label class="density-option">
+                                <input type="radio" name="density-area5a" value="full" data-grafts="750">
+                                <span class="density-label">Full</span>
+                                <span class="density-fu">40-45 FU/cm²</span>
+                                <span class="graft-count">∼ 750 Grafts</span>
+                            </label>
+                            <label class="density-option">
+                                <input type="radio" name="density-area5a" value="moderate" data-grafts="500" checked>
+                                <span class="density-label">Moderate</span>
+                                <span class="density-fu">30-35 FU/cm²</span>
+                                <span class="graft-count">∼ 500 Grafts</span>
+                            </label>
+                            <label class="density-option camouflage">
+                                <input type="radio" name="density-area5a" value="camouflage" data-grafts="350">
+                                <span class="density-label">Camouflage</span>
+                                <span class="density-fu">20 FU/cm²</span>
+                                <span class="graft-count">∼ 350 Grafts</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Area 5B - Post-Crown -->
+                    <div class="area-option-card">
+                        <div class="area-header">
+                            <label class="area-checkbox">
+                                <input type="checkbox" name="area" value="area5b" id="area-area5b">
+                                <strong>Area 5B - Post Crown Ring</strong>
+                            </label>
+                            <span class="area-description">Behind crown, touching lateral horns</span>
+                        </div>
+                        <div class="density-options" id="density-area5b">
+                            <label class="density-option">
+                                <input type="radio" name="density-area5b" value="full" data-grafts="750">
+                                <span class="density-label">Full</span>
+                                <span class="density-fu">40-45 FU/cm²</span>
+                                <span class="graft-count">∼ 750 Grafts</span>
+                            </label>
+                            <label class="density-option">
+                                <input type="radio" name="density-area5b" value="moderate" data-grafts="500" checked>
+                                <span class="density-label">Moderate</span>
+                                <span class="density-fu">30-35 FU/cm²</span>
+                                <span class="graft-count">∼ 500 Grafts</span>
+                            </label>
+                            <label class="density-option camouflage">
+                                <input type="radio" name="density-area5b" value="camouflage" data-grafts="350">
+                                <span class="density-label">Camouflage</span>
+                                <span class="density-fu">20 FU/cm²</span>
+                                <span class="graft-count">∼ 350 Grafts</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Area 6A - Front Crown -->
+                    <div class="area-option-card">
+                        <div class="area-header">
+                            <label class="area-checkbox">
+                                <input type="checkbox" name="area" value="area6a" id="area-area6a">
+                                <strong>Area 6A - Front Crown</strong>
+                            </label>
+                            <span class="area-description">Front half of the crown</span>
+                        </div>
+                        <div class="density-options" id="density-area6a">
+                            <label class="density-option">
+                                <input type="radio" name="density-area6a" value="full" data-grafts="600">
+                                <span class="density-label">Full</span>
+                                <span class="density-fu">40-45 FU/cm²</span>
+                                <span class="graft-count">∼ 600 Grafts</span>
+                            </label>
+                            <label class="density-option">
+                                <input type="radio" name="density-area6a" value="moderate" data-grafts="450" checked>
+                                <span class="density-label">Moderate</span>
+                                <span class="density-fu">30-35 FU/cm²</span>
+                                <span class="graft-count">∼ 450 Grafts</span>
+                            </label>
+                            <label class="density-option camouflage">
+                                <input type="radio" name="density-area6a" value="camouflage" data-grafts="300">
+                                <span class="density-label">Camouflage</span>
+                                <span class="density-fu">20 FU/cm²</span>
+                                <span class="graft-count">∼ 300 Grafts</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Area 6B - Back Crown -->
+                    <div class="area-option-card">
+                        <div class="area-header">
+                            <label class="area-checkbox">
+                                <input type="checkbox" name="area" value="area6b" id="area-area6b">
+                                <strong>Area 6B - Back Crown</strong>
+                            </label>
+                            <span class="area-description">Back half of the crown</span>
+                        </div>
+                        <div class="density-options" id="density-area6b">
+                            <label class="density-option">
+                                <input type="radio" name="density-area6b" value="full" data-grafts="600">
+                                <span class="density-label">Full</span>
+                                <span class="density-fu">40-45 FU/cm²</span>
+                                <span class="graft-count">∼ 600 Grafts</span>
+                            </label>
+                            <label class="density-option">
+                                <input type="radio" name="density-area6b" value="moderate" data-grafts="450" checked>
+                                <span class="density-label">Moderate</span>
+                                <span class="density-fu">30-35 FU/cm²</span>
+                                <span class="graft-count">∼ 450 Grafts</span>
+                            </label>
+                            <label class="density-option camouflage">
+                                <input type="radio" name="density-area6b" value="camouflage" data-grafts="300">
+                                <span class="density-label">Camouflage</span>
+                                <span class="density-fu">20 FU/cm²</span>
+                                <span class="graft-count">∼ 300 Grafts</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Graft Summary -->
+                <div class="graft-summary" id="graft-summary">
+                    <h3>Estimated Graft Summary</h3>
+                    <div class="summary-details" id="summary-details">
+                        <p class="no-selection">Please select at least one area to see the estimate</p>
+                    </div>
+                    <div class="total-grafts" id="total-grafts" style="display: none;">
+                        <span>Total Estimated Grafts:</span>
+                        <strong><span id="total-graft-count">0</span></strong>
+                    </div>
+                </div>
+
+                <p class="credit-estimate" style="text-align:center;font-size:0.82rem;color:#888;margin:8px 0 4px;">Estimated cost: ~69 credits per generation</p>
+                <div class="button-group">
+                    <button onclick="backToUpload()" class="btn btn-secondary">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="19" y1="12" x2="5" y2="12"/>
+                            <polyline points="12 19 5 12 12 5"/>
+                        </svg>
+                        Back
+                    </button>
+                    <button onclick="generateHair()" class="btn btn-primary" id="generate-btn">
+                        Generate Preview
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Results -->
+            <div class="step" id="step-results" style="display: none;">
+                <h2>Transformation Preview</h2>
+                <div id="loadingIndicator" class="loading">
+                    <div class="spinner"></div>
+                    <div class="gen-spinner-wrap">
+                        <div class="gen-rings">
+                            <div class="gen-ring gen-ring-1"></div>
+                            <div class="gen-ring gen-ring-2"></div>
+                            <div class="gen-ring gen-ring-3"></div>
+                            <div class="gen-ring-core"></div>
+                        </div>
+                        <div class="gen-status-wrap">
+                            <div class="gen-status-msg visible" id="gen-msg">Analysing hair pattern…</div>
+                        </div>
+                        <div class="gen-status-sub" id="gen-sub">This may take 1–2 minutes</div>
+                        <div class="gen-progress-bar"></div>
+                        <div class="gen-dots">
+                            <div class="gen-dot"></div>
+                            <div class="gen-dot"></div>
+                            <div class="gen-dot"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="resultsContainer" style="display: none;">
+                    <div class="results-grid">
+                        <div class="result-item">
+                            <h3 class="before-title">Before</h3>
+                            <img id="beforeImage" alt="Before">
+                        </div>
+                        <div class="result-item">
+                            <h3 class="after-title">After</h3>
+                            <img id="afterImage" alt="After">
+                        </div>
+                    </div>
+                    
+                    <!-- Results Summary -->
+                    <div class="results-summary" id="results-summary">
+                        <h3>Treatment Summary</h3>
+                        <div id="results-details"></div>
+
+                        <!-- Cost Estimate -->
+                        <div class="cost-estimate-section" id="cost-estimate-section">
+                            <button onclick="getCostEstimate()" class="btn btn-gold" id="cost-estimate-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px;">
+                                    <line x1="12" y1="1" x2="12" y2="23"/>
+                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                </svg>
+                                Get Cost Estimate
+                            </button>
+                            <div id="cost-estimate-result" class="cost-estimate-result" style="display:none;"></div>
+                        </div>
+
+                        <!-- Disclaimer -->
+                        <div class="disclaimer">
+                            <strong>Important Disclaimer</strong>
+                            This visualization is a rough estimate generated by AI for illustrative purposes only. 
+                            It does not guarantee actual surgical results. Individual outcomes vary based on factors 
+                            including hair characteristics, donor area quality, and surgical technique. 
+                            Please consult with a qualified hair restoration specialist for accurate assessment.
+                        </div>
+                    </div>
+                    
+                    <!-- Download Section -->
+                    <div class="download-section">
+                        <h3>Download Your Results</h3>
+                        <div class="download-buttons">
+                            <button onclick="downloadImage('before')" class="btn btn-outline btn-small">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                                Before Image
+                            </button>
+                            <button onclick="downloadImage('after')" class="btn btn-outline btn-small">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                                After Image
+                            </button>
+                            <button onclick="downloadCombinedImage()" class="btn btn-primary btn-small">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <line x1="12" y1="3" x2="12" y2="21"/>
+                                </svg>
+                                Before &amp; After
+                            </button>
+                            <button onclick="downloadPDF()" class="btn btn-gold btn-small">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                    <line x1="16" y1="13" x2="8" y2="13"/>
+                                    <line x1="16" y1="17" x2="8" y2="17"/>
+                                    <polyline points="10 9 9 9 8 9"/>
+                                </svg>
+                                Download PDF Report
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Share Results Section (hidden in embed/client mode) -->
+                    {% if not embed_mode %}
+                    <div class="share-results-section" id="share-results-section">
+                        <div class="share-results-inner">
+                            <div class="share-results-text">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="18" cy="5" r="3"/>
+                                    <circle cx="6" cy="12" r="3"/>
+                                    <circle cx="18" cy="19" r="3"/>
+                                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                                </svg>
+                                <div>
+                                    <h4>Share Your Results</h4>
+                                    <p>Create a shareable link to your before &amp; after comparison</p>
+                                </div>
+                            </div>
+                            <button onclick="shareBeforeAfter()" class="btn btn-share" id="share-before-after-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                                </svg>
+                                                                Generate Share Link
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <!-- 360° Turntable Section -->
+                    <div class="turntable-section" id="turntable-section">
+                        <div class="turntable-header">
+                            <h3>360° Turntable View</h3>
+                            <p class="turntable-description">Generate 8 images at key rotation angles to create an interactive 360° view of the result.</p>
+                        </div>
+                        
+                        <!-- Generate Button -->
+                        <div id="turntable-start" class="turntable-start">
+                            <button onclick="startTurntableGeneration()" class="btn btn-turntable" id="turntable-generate-btn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                                </svg>
+                                Generate 360° Turntable (8 Views)
+                            </button>
+                            <p class="turntable-note">
+                                This will generate 8 AI images at key angles. It may take a couple of minutes.
+                                <br><strong style="color: #e94560;">Estimated cost: ~69 credits per view (~552 credits total)</strong>
+                            </p>
+                        </div>
+                        
+                        <!-- Progress Section -->
+                        <div id="turntable-progress" class="turntable-progress" style="display: none;">
+                            <div class="progress-header">
+                                <span id="turntable-status-text">Analyzing image...</span>
+                                <span id="turntable-progress-count">0 / 8</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" id="turntable-progress-bar" style="width: 0%"></div>
+                            </div>
+                            <p class="progress-angle" id="turntable-current-angle">Generating: Front View</p>
+                        </div>
+                        
+                        <!-- 360° Viewer -->
+                        <div id="turntable-viewer" class="turntable-viewer" style="display: none;">
+                            <div class="viewer-main">
+                                <!-- Previous Button -->
+                                <button class="nav-btn nav-prev" id="nav-prev-btn" onclick="navigateTurntable(-1)" title="Previous angle (Left arrow)">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <polyline points="15 18 9 12 15 6"/>
+                                    </svg>
+                                </button>
+                                
+                                <div class="viewer-container" id="viewer-container">
+                                    <img id="turntable-image" class="turntable-image" alt="360° View" draggable="false">
+                                    <div class="viewer-overlay" id="viewer-overlay">
+                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                            <polyline points="15 18 9 12 15 6"/>
+                                        </svg>
+                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                            <polyline points="9 18 15 12 9 6"/>
+                                        </svg>
+                                        <span>Use arrows or drag to rotate</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Next Button -->
+                                <button class="nav-btn nav-next" id="nav-next-btn" onclick="navigateTurntable(1)" title="Next angle (Right arrow)">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <polyline points="9 18 15 12 9 6"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <div class="viewer-controls">
+                                <div class="angle-indicator">
+                                    <span class="angle-label">Angle:</span>
+                                    <span class="angle-value" id="viewer-angle">0°</span>
+                                    <span class="angle-view-name" id="viewer-view-name">Front View</span>
+                                    <span class="angle-step" id="viewer-step">(1 / 8)</span>
+                                </div>
+                                <div class="viewer-hint">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="15 18 9 12 15 6"/>
+                                    </svg>
+                                    Prev / Next buttons, arrow keys, or drag
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9 18 15 12 9 6"/>
+                                    </svg>
+                                </div>
+                                <div class="auto-rotate-toggle">
+                                    <button onclick="toggleAutoRotate()" class="btn btn-small btn-outline" id="auto-rotate-btn">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polygon points="5 3 19 12 5 21 5 3"/>
+                                        </svg>
+                                        Auto Rotate
+                                    </button>
+                                    {% if not embed_mode %}
+                                    <button onclick="shareWithTurntable()" class="btn btn-small btn-share" id="share-turntable-btn">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="18" cy="5" r="3"/>
+                                            <circle cx="6" cy="12" r="3"/>
+                                            <circle cx="18" cy="19" r="3"/>
+                                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                                        </svg>
+                                        Share with 360°
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <!-- Thumbnail strip -->
+                            <div class="turntable-thumbnails" id="turntable-thumbnails"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button onclick="startOver()" class="btn btn-secondary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="1 4 1 10 7 10"/>
+                                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                            </svg>
+                            Start Over
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Powered by FlowMediQ AI </p>
+        </footer>
+    </div>
+
+    <!-- Manage Shared Links Panel -->
+    <div class="manage-shares-overlay" id="manage-shares-overlay">
+        <div class="manage-shares-panel">
+            <div class="manage-shares-header">
+                <h2>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="18" cy="5" r="3"/>
+                        <circle cx="6" cy="12" r="3"/>
+                        <circle cx="18" cy="19" r="3"/>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                    </svg>
+                    My Shared Links
+                </h2>
+                <button class="manage-shares-close" onclick="closeManageShares()">&times;</button>
+            </div>
+            <p class="manage-shares-desc">View and manage all your shared 360° turntable results. Anyone with the link can view the shared results.</p>
+            <div class="manage-shares-body" id="manage-shares-body">
+                <div class="manage-shares-loading" id="manage-shares-loading">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" stroke-width="2" class="spin-icon">
+                        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                    </svg>
+                    <p>Loading shared links...</p>
+                </div>
+                <div class="manage-shares-empty" id="manage-shares-empty" style="display:none;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5">
+                        <circle cx="18" cy="5" r="3"/>
+                        <circle cx="6" cy="12" r="3"/>
+                        <circle cx="18" cy="19" r="3"/>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                    </svg>
+                    <h3>No Shared Links Yet</h3>
+                    <p>Generate a 360° turntable and share it to see your links here.</p>
+                </div>
+                <div class="manage-shares-list" id="manage-shares-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demo Links Management Panel -->
+    <div class="manage-shares-overlay" id="demo-links-overlay">
+        <div class="manage-shares-panel" style="max-width:640px;">
+            <div class="manage-shares-header">
+                <h2>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                    </svg>
+                    Demo Links
+                </h2>
+                <button class="manage-shares-close" onclick="closeDemoLinks()">&times;</button>
+            </div>
+            <p class="manage-shares-desc">Create shareable demo links for prospective patients. Each link allows one free AI hair simulation. Generations deduct from your credits.</p>
+
+            <!-- Create new link -->
+            <div style="display:flex;gap:10px;margin-bottom:20px;align-items:center;flex-wrap:wrap;">
+                <input type="text" id="demo-link-label" placeholder="Link label (e.g. Website, Instagram)" style="flex:1;min-width:180px;padding:10px 14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;color:#fff;font-size:14px;font-family:inherit;outline:none;" />
+                <button onclick="createDemoLink()" class="btn btn-primary" id="create-demo-link-btn" style="white-space:nowrap;padding:10px 20px;font-size:14px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Create Link
+                </button>
+            </div>
+
+            <div id="demo-links-body">
+                <div id="demo-links-loading" style="text-align:center;padding:30px;">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" stroke-width="2" class="spin-icon"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                    <p style="color:#94a3b8;margin-top:10px;">Loading demo links...</p>
+                </div>
+                <div id="demo-links-empty" style="display:none;text-align:center;padding:30px;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    <h3 style="color:#e2e8f0;margin-top:12px;font-size:16px;">No Demo Links Yet</h3>
+                    <p style="color:#94a3b8;font-size:13px;">Create your first demo link to start capturing leads.</p>
+                </div>
+                <div id="demo-links-list" style="display:flex;flex-direction:column;gap:12px;"></div>
+            </div>
+
+            <!-- Leads sub-panel (shown when viewing a link's leads) -->
+            <div id="demo-leads-panel" style="display:none;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                    <button onclick="backToDemoLinks()" style="background:none;border:none;color:#a78bfa;cursor:pointer;font-size:14px;font-family:inherit;display:flex;align-items:center;gap:4px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                        Back
+                    </button>
+                    <h3 id="demo-leads-title" style="font-size:16px;color:#e2e8f0;margin:0;">Leads</h3>
+                    <button id="push-all-crm-btn" onclick="pushAllToCrm()" style="padding:5px 12px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);border-radius:8px;color:#34d399;font-size:11px;cursor:pointer;font-family:inherit;margin-left:auto;">Push All Verified to CRM</button>
+                </div>
+                <div id="demo-leads-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+                <div id="demo-leads-empty" style="display:none;text-align:center;padding:20px;color:#94a3b8;font-size:13px;">No leads captured yet for this link.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Suite hub URL for deep-linking to credit/subscription purchase
+        window.SUITE_URL = {{ (suite_url or 'https://suite.flowmediq.io') | tojson }};
+        // Per-user cost tiers injected at page load (server-side)
+        window.USER_COST_TIERS = {{ cost_tiers | tojson }};
+        // Embed mode: true when ?embed=1 — hides all practitioner-only controls
+        window.EMBED_MODE = {{ 'true' if embed_mode else 'false' }};
+    </script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/voice.js') }}"></script>
+<script src="{{ url_for('static', filename='js/studio360-bridge.js') }}"></script>
+</body>
+</html>
