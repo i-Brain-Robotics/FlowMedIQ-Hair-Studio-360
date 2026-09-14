@@ -10,7 +10,7 @@ import uuid
 from contextlib import contextmanager
 from pathlib import Path
 
-from flask import jsonify, render_template, request, session, send_file, abort, redirect
+from flask import jsonify, render_template, request, session, send_file, abort
 from PIL import Image, ImageDraw, ImageOps
 from google.genai import types
 from treatment_model import calculate, PROTOCOLS
@@ -18,14 +18,6 @@ from treatment_model import calculate, PROTOCOLS
 
 def register(app, backend):
     app.config.setdefault('STUDIO360_DATA_DIR', str(Path(app.instance_path) / 'studio360'))
-
-    # Shared public design assets remain hosted by the existing studio.
-    # No patient media is referenced by these fixed routes.
-    for design_asset in ('favicon.png', 'flowmediq-logo.png', 'scalp_zones.png'):
-        app.add_url_rule('/static/images/' + design_asset,
-                         endpoint='studio360_design_' + design_asset,
-                         view_func=lambda filename=design_asset: redirect(
-                             'https://hairstudio.flowmediq.io/static/images/' + filename, code=302))
 
     @contextmanager
     def connect():

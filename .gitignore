@@ -103,7 +103,3 @@ static/turntable/
 static/shares/
 static/user_cost_settings.json
 !.env.example
-# Public design assets are referenced from the existing app in this source-only review.
-static/images/favicon.png
-static/images/flowmediq-logo.png
-static/images/scalp_zones.png

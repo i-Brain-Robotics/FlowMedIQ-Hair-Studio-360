@@ -40,8 +40,8 @@ Model tests (9), new route tests (8), legacy Gemini regressions (16), the shared
 
 After configuration, verify `/healthz`, Suite launch with the authorized test account, photo upload, original transplant generation, all non-surgical presets, side-by-side and combined images, report download, displayed credit deductions, and cached image reuse. Confirm both original live apps remain reachable. Live-provider generation spends configured credits; no live image generation has been performed for this app yet.
 
-## Design asset hosting
+## Design assets
 
-Three fixed design routes redirect to the existing public Hair Studio `favicon.png`, `flowmediq-logo.png`, and `scalp_zones.png`. There are no patient-media redirects. The app depends on the original service for those public assets until an authorized asset upload is completed.
+The logo, favicon and scalp-zone reference diagram are included in `static/images`. The new app serves them directly and does not require the existing Hair Studio service for design assets.
 
 The inherited personal notification address was removed. Demo notifications use the tenant address and an optional administrator-configured `DEMO_MASTER_NOTIFY_EMAIL`; no Render value was changed.
