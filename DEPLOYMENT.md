@@ -4,6 +4,18 @@
 
 Deploy only from `i-Brain-Robotics/FlowMedIQ-Hair-Studio-360`. The similarly named `Hair-Studio-360` repository is a different app.
 
+## Created Render service
+
+- [Service dashboard](https://dashboard.render.com/web/srv-dak63d3l550s73a22apg)
+- Service ID: `srv-dak63d3l550s73a22apg`
+- Workspace: Santosh Katekari (confirmed by the owner)
+- App URL: https://flowmediq-hair-studio-360.onrender.com
+- Suite callback: https://flowmediq-hair-studio-360.onrender.com/auth/sso
+- Suite app identifier: `flowmediq-hair-studio-360`
+- Free instance, Oregon, manual deploys
+
+The service was created without setting environment variables. The administrator must enter the required values below and register the new Suite app before end-to-end image-generation verification. The health endpoint is `/healthz`; direct MCP service creation uses Render's default port health check, while the committed Blueprint also specifies this HTTP path.
+
 ## Render configuration
 
 The workspace already has a different Hair Studio 360 app. This deployment uses the distinct service name FlowMedIQ Hair Studio 360 and Suite identifier `flowmediq-hair-studio-360`.
